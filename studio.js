@@ -78,7 +78,7 @@ function undo(delta = -1) {
     toast(delta < 0 ? '元に戻しました' : 'やり直しました');
 }
 function download(blob, name) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-function saveProject() { commit(); download(new Blob([JSON.stringify(snapshot())], {type:'application/json'}), 'FormCross-design.fcs'); toast('プロジェクトを保存しました'); }
+function saveProject() { commit(); download(new Blob([JSON.stringify(snapshot())], {type:'application/json'}), 'AppVisual-design.fcs'); toast('プロジェクトを保存しました'); }
 async function loadProject(event) {
     const file = event.target.files[0]; event.target.value = ''; if (!file) return;
     try { if (file.size > 40000000) throw Error('40MB以下のプロジェクトを選択してください。'); const data = validateProject(JSON.parse(await file.text())); commit(); restore(data); commit(); resetZoom(); toast('読み込みました。元に戻すこともできます'); } catch (error) { toast('読み込み失敗：' + error.message); }
@@ -118,7 +118,7 @@ async function exportImage() {
             ctx.drawImage(result, i*part.width, 0, part.width, part.height, 0,0,part.width,part.height); 
             const blob = await new Promise(resolve => part.toBlob(resolve,'image/jpeg', 1.0)); 
             if (!blob) throw Error('画像を生成できませんでした'); 
-            download(blob, `FormCross_${$('canvas-size').value}_${i+1}.jpg`); 
+            download(blob, `AppVisual_${$('canvas-size').value}_${i+1}.jpg`); 
         }
         toast('JPG画像を書き出しました（App Store完全対応）');
     } catch (error) { toast('書き出し失敗：画像やネットワークを確認してください。' + error.message); }
