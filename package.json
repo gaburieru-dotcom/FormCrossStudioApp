@@ -1,5 +1,5 @@
 {
-  "name": "formcrossstudio",
+  "name": "appvisual",
   "version": "1.0.2",
   "description": "アプリ紹介用スクリーンショットを制作するWebスタジオ",
   "main": "main.js",
@@ -12,7 +12,7 @@
   },
   "build": {
     "appId": "com.formcross.studio",
-    "productName": "FormCross Studio Pro",
+      "productName": "AppVisual",
     "mac": {
       "target": [
         "dmg",
