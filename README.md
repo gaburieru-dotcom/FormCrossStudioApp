@@ -1,4 +1,4 @@
-# FormCross Studio
+# AppVisual
 
 アプリ紹介用スクリーンショットを制作するmacOS向けElectronアプリです。
 
