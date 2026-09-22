@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormCross Studio Pro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Added Shippori Mincho for elegant/Japanese text -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=M+PLUS+Rounded+1c:wght@700;900&family=Shippori+Mincho:wght@700;800&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="node_modules/html-to-image/dist/html-to-image.js"></script>
+    <script src="node_modules/html2canvas/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="node_modules/@phosphor-icons/web/src/regular/style.css">
+<link rel="stylesheet" href="node_modules/@phosphor-icons/web/src/fill/style.css">
+<script src="node_modules/dompurify/dist/purify.min.js"></script>
+
+
+    <style>
+        :root {
+            --canvas-w: 1242px; --canvas-h: 2688px;
+            --scale: 0.16; 
+            --font-family: 'Noto Sans JP', sans-serif;
+            --bg-color: #151515;
+            --panel-bg: #222222;
+            --accent: #0a84ff;
+            --border: #333333;
+        }
+        
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color); color: #fff;
+            margin: 0; padding: 0; display: flex; flex-direction: column;
+            height: 100vh; box-sizing: border-box; overflow: hidden;
+        }
+
+        /* Top Navbar */
+        .navbar {
+            height: 60px; background: var(--panel-bg); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0;
+        }
+        .nav-brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
+        .nav-brand span { font-size: 10px; background: var(--accent); padding: 3px 6px; border-radius: 4px; letter-spacing: 1px;}
+        
+        .nav-tools { display: flex; gap: 10px; align-items: center; }
+        .lang-select { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer;}
+        .export-btn { background: var(--accent); color: white; border: none; font-weight: bold; padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: 0.2s;}
+        .export-btn:hover { background: #0066cc; }
+
+        /* Main Workspace */
+        .workspace { display: flex; flex-grow: 1; height: calc(100vh - 60px); }
+
+        /* Left Sidebar (Library/Tabs) */
+        .sidebar-left { width: 340px; background: var(--panel-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        
+        .sidebar-tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; background: none; border: none; color: #888; padding: 15px; font-weight: 700; cursor: pointer; font-size: 13px; transition: 0.2s; border-bottom: 3px solid transparent;}
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(10,132,255,0.05);}
+        
+        .tab-content { display: none; flex-direction: column; overflow-y: auto; flex-grow: 1;}
+        .tab-content.active { display: flex !important; }
+
+        .panel-section { padding: 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px;}
+        .panel-title { font-size: 12px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+        .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .add-grid button { background: #2a2a2a; border: 1px solid #444; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s;}
+        .add-grid button i { font-size: 24px; color: #ddd;}
+        .add-grid button:hover { background: #333; border-color: var(--accent); color: var(--accent);}
+        .add-grid button:hover i { color: var(--accent); }
+
+        /* Free Backgrounds */
+        .bg-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px;}
+        .bg-scroll::-webkit-scrollbar { height: 4px; }
+        .bg-scroll::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        .bg-thumb { width: 60px; height: 60px; border-radius: 8px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s;}
+        .bg-thumb:hover { border-color: var(--accent); transform: scale(1.05);}
+
+        /* Template Grouping */
+        .template-group-title { font-size: 12px; color: #fff; font-weight: 800; margin-top: 20px; padding-bottom: 8px; border-bottom: 1px solid #444;}
+        .template-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px;}
+        .template-btn { background: #2a2a2a; border: 1px solid #444; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; color: #fff; text-align: left; transition: 0.2s; display: flex; flex-direction: column;}
+        .template-btn:hover { border-color: var(--accent); }
+        
+        .material-card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .material-card:hover { border-color: var(--accent); background: #2a2a2a; }
+
+        .template-btn span { color: #888; font-size: 11px; margin-top:4px; font-weight: 400;}
+        
+        /* Center Canvas */
+        .canvas-area { flex-grow: 1; background: #111; display: flex; justify-content: center; align-items: center; position: relative; overflow: auto; transition: 0.3s;}
+        
+        .preview-container {
+            width: calc(var(--canvas-w) * var(--scale)); height: calc(var(--canvas-h) * var(--scale));
+            position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.5); background: white; flex-shrink: 0;
+            transition: width 0.3s, height 0.3s;
+        }
+
+        #screenshot-canvas {
+            width: var(--canvas-w); height: var(--canvas-h);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            position: absolute; top: 0; left: 0;
+            transform-origin: top left; transform: scale(var(--scale));
+            box-sizing: border-box; overflow: hidden;
+        }
+
+        #bg-pattern { position: absolute; inset: 0; opacity: 1; pointer-events: none; z-index: 1; background: rgba(0,0,0,0.2); display:none;}
+        #split-guide { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: repeating-linear-gradient(to bottom, #ff3b30, #ff3b30 20px, transparent 20px, transparent 40px); z-index: 999; display: none; pointer-events: none;}
+
+        /* Elements */
+        .element { position: absolute; cursor: grab; z-index: 20; transform-style: preserve-3d; }
+        .element:active { cursor: grabbing; }
+        .element.selected { outline: 6px solid var(--accent); outline-offset: 10px;}
+
+        /* Text Block */
+        .text-block { width: max-content; padding: 20px;}
+        .text-block h1 { margin: 0; white-space: pre-wrap; font-weight: 900; outline: none; }
+
+        /* Device Frame */
+        .device-wrapper { width: 1000px; padding: 20px;}
+        .device-frame {
+            width: 100%; height: 2164px; background: #000; border-radius: 140px; padding: 25px; box-sizing: border-box;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5), inset 0 0 0 4px #444, inset 0 0 0 12px #111, inset 0 0 0 16px #444; position: relative;
+        }
+        
+        /* Titanium Colors */
+        .device-frame.natural { background: linear-gradient(135deg, #e3dcd1, #b5af9f); box-shadow: 0 50px 100px rgba(0,0,0,0.5), inset 0 0 0 4px #b5af9f, inset 0 0 0 12px #222, inset 0 0 0 16px #948d7c; }
+        .device-frame.blue { background: linear-gradient(135deg, #4f5b66, #2c363f); box-shadow: 0 50px 100px rgba(0,0,0,0.5), inset 0 0 0 4px #2c363f, inset 0 0 0 12px #111, inset 0 0 0 16px #1a2228; }
+        .device-frame.white { background: linear-gradient(135deg, #f8f9f8, #e5e6e3); box-shadow: 0 50px 100px rgba(0,0,0,0.4), inset 0 0 0 4px #e5e6e3, inset 0 0 0 12px #ccc, inset 0 0 0 16px #fff; }
+        .device-frame.black { background: linear-gradient(135deg, #333333, #1c1c1c); box-shadow: 0 50px 100px rgba(0,0,0,0.6), inset 0 0 0 4px #222, inset 0 0 0 12px #0a0a0a, inset 0 0 0 16px #2a2a2a; }
+        
+        /* Dynamic Island */
+        .device-dynamic-island {
+            position: absolute; top: 35px; left: 50%; transform: translateX(-50%); width: 330px; height: 95px; 
+            background: #000; border-radius: 50px; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box;
+            box-shadow: inset 0 -4px 10px rgba(255,255,255,0.1), inset 0 4px 10px rgba(0,0,0,0.8);
+        }
+        .island-camera { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #1a1a4a, #000 70%); box-shadow: inset 0 -1px 3px rgba(255,255,255,0.2); }
+        .island-sensor { width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #0a0a1a, #000 60%); margin-right: 15px;}
+        
+        /* Hardware Buttons */
+        .device-hardware-buttons div { position: absolute; background: inherit; border-radius: 10px; width: 8px; z-index: -1;}
+        .button-action { top: 300px; left: -8px; height: 70px; }
+        .button-vol-up { top: 430px; left: -8px; height: 160px; }
+        .button-vol-down { top: 620px; left: -8px; height: 160px; }
+        .button-power { top: 480px; right: -8px; height: 230px; }
+
+        /* Glare effect */
+        .device-glare {
+            display: none; position: absolute; top: -10%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg); pointer-events: none; z-index: 15;
+        }
+        .device-frame.glare-on .device-glare { display: block; }
+        
+        .device-screen { width: 100%; height: 100%; background: #111; border-radius: 110px; overflow: hidden; position: relative; display:flex; align-items:center; justify-content:center; color:#666; font-size:40px; box-shadow: inset 0 0 0 10px #000;}
+        .device-screen img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset:0; z-index:2; }
+        
+        /* iPad Specific */
+        .device-frame.ipad { width: 1700px; height: 2266px; border-radius: 90px; padding: 40px; box-shadow: 0 60px 120px rgba(0,0,0,0.6), inset 0 0 0 6px #222; }
+        .device-camera-ipad { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: #000; box-shadow: inset 0 0 5px rgba(255,255,255,0.2); z-index: 10;}
+        .device-frame.ipad .device-screen { border-radius: 50px; box-shadow: none; }
+
+        /* Badges / Materials */
+        .pro-badge { display: flex; align-items: center; justify-content: center; padding: 20px 40px; border-radius: 100px; font-weight: 900; box-shadow: 0 20px 50px rgba(0,0,0,0.4); text-align: center; line-height: 1.1; outline:none; }
+        .pro-badge span { outline: none; font-family: 'Noto Sans JP', sans-serif;}
+        .pro-badge.yellow { background: linear-gradient(135deg, #FFD700, #F5A623); color: #fff; text-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 6px solid rgba(255,255,255,0.5); }
+        .pro-badge.dark { background: rgba(0,0,0,0.8); color: white; backdrop-filter: blur(20px); border: 4px solid rgba(255,255,255,0.2); }
+        .pro-badge.accent { background: linear-gradient(135deg, var(--accent), #005bb5); color: white; border: 4px solid rgba(255,255,255,0.3); }
+        .pro-badge.stars { background: transparent; box-shadow: none; border: none; padding: 0; font-size: 80px; letter-spacing: 10px; color: #FFD700; text-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .pro-badge.store { background: #000; color: #fff; border: 4px solid #fff; border-radius: 20px; font-size: 40px; padding: 15px 30px; font-weight: 400; font-family: -apple-system, sans-serif;}
+
+        /* Custom Resize Handle for Text */
+        .resize-handle {
+            display: none; position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 80px; background: var(--accent); border: 6px solid #fff; border-radius: 20px;
+            cursor: ew-resize; z-index: 101; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .element.selected .resize-handle { display: block; }
+        
+        /* Right Sidebar (Inspector) */
+        .sidebar-right { width: 320px; background: var(--panel-bg); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .inspector-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;}
+        .inspector-row.inline { flex-direction: row; align-items: center; justify-content: space-between; }
+        .inspector-row label { font-size: 11px; font-weight: 700; color: #999; }
+        
+        .inspector-input { width: 100%; padding: 10px; border: 1px solid #444; background: #1a1a1a; color: #fff; border-radius: 6px; font-size: 12px; box-sizing: border-box; transition: 0.2s;}
+        .inspector-input:focus { border-color: var(--accent); outline: none; }
+        textarea.inspector-input { resize: vertical; min-height: 80px; font-family: inherit; font-size: 13px;}
+        
+        .inspector-slider { width: 100%; accent-color: var(--accent); cursor: pointer;}
+        .inspector-color { width: 100%; height: 35px; border: none; border-radius: 6px; cursor: pointer; padding: 0; background: none; }
+        
+        .inspector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+        .inspector-btn { background: #2a2a2a; border: 1px solid #444; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 12px; color: #fff; text-align: center; font-weight:bold; transition: 0.2s;}
+        .inspector-btn:hover { background: #333; }
+        .inspector-btn.danger { color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);}
+        .inspector-btn.danger:hover { background: rgba(255,69,58,0.1); }
+
+        #empty-state { padding: 60px 20px; text-align: center; color: #666; font-size: 13px; }
+        .prop-section { display: none; }
+        .prop-section.active { display: block; }
+        
+        .adv-section-title { font-size: 10px; color: #666; font-weight: 800; text-transform: uppercase; margin: 20px 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px;}
+    </style>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="nav-brand"><i class="ph-fill ph-intersect"></i> FormCross Studio <span>STUDIO</span></div>
+        <div class="nav-tools">
+            <span style="font-size: 11px; color: #888;">テキスト言語</span>
+            <select class="lang-select" id="ui-lang" onchange="changeLanguage()">
+                <option value="ja">🇯🇵 JP</option>
+                <option value="en">🇺🇸 EN</option>
+            </select>
+            <button class="export-btn" onclick="exportImage()"><i class="ph ph-download-simple"></i> 画像書き出し</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="sidebar-left">
+            <!-- Tabs -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" id="btn-tab-design" onclick="switchTab('design')"><i class="ph ph-paint-brush"></i> デザイン</button>
+                <button class="tab-btn" id="btn-tab-materials" onclick="switchTab('materials')"><i class="ph ph-shapes"></i> 素材</button>
+                <button class="tab-btn" id="btn-tab-templates" onclick="switchTab('templates')"><i class="ph ph-magic-wand"></i> テンプレート</button>
+            </div>
+
+            <!-- Tab: Design -->
+            <div id="tab-design" class="tab-content active">
+                <div class="panel-section">
+                    <div class="panel-title">キャンバス・背景設定</div>
+                    <div class="inspector-row">
+                        <select class="inspector-input" id="canvas-size" onchange="updateCanvasSize()" style="font-weight:bold; border-color:var(--accent);">
+                            <option value="iphone">📱 iPhone 6.5" (1242 x 2688)</option>
+                            <option value="iphone-pano">📱 iPhone パノラマ (2画面)</option>
+                            <option value="ipad">📱 iPad Pro (2048 x 2732)</option>
+                            <option value="ipad-pano">📱 iPad パノラマ (2画面)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="adv-section-title" style="margin-top: 5px;">無地・グラデーション</div>
+                    <div class="inspector-grid">
+                        <div class="inspector-row"><label>背景 上部</label><input type="color" class="inspector-color" id="bg-c1" value="#1e3c72" oninput="customColor()"></div>
+                        <div class="inspector-row"><label>背景 下部</label><input type="color" class="inspector-color" id="bg-c2" value="#2a5298" oninput="customColor()"></div>
+                    </div>
+
+                    <div class="adv-section-title">✨ 無料 写真素材 (Unsplash)</div>
+                    <div class="bg-scroll" id="free-bg-list">
+                        <!-- Populated by JS -->
+                    </div>
+                    <label style="font-size:10px; color:#666; margin-top:5px; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="bg-overlay" onchange="toggleOverlay()"> 背景を少し暗くする</label>
+                </div>
+
+                <div class="panel-section" style="border-bottom: none;">
+                    <div class="panel-title">要素を追加</div>
+                    <div class="add-grid">
+                        <button onclick="addText()"><i class="ph ph-text-t"></i>テキストを追加</button>
+                        <button onclick="addDevice('iphone-black')"><i class="ph ph-device-mobile"></i>iPhoneを追加</button>
+                        <button onclick="addDevice('ipad-silver')"><i class="ph ph-device-tablet"></i>iPadを追加</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Materials -->
+            <div id="tab-materials" class="tab-content">
+                <div class="panel-section" style="border-bottom: none; padding-top: 10px;">
+                    <div class="panel-title">バッジ・ラベル</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="material-card" onclick="addBadgeObj('★★★★★', '★★★★★', 'stars', 200, 200)">
+                           <div class="pro-badge stars" style="font-size:14px; position:static; display:inline-block; margin-bottom:5px;">★★★★★</div>
+                           <div style="font-size:11px; color:#aaa;">レビュー星</div>
+                        </div>
+                        <div class="material-card" onclick="addBadgeObj('🏆 No.1', '🏆 No.1', 'yellow', 200, 200)">
+                           <div class="pro-badge yellow" style="font-size:14px; position:static; display:inline-block; margin-bottom:5px;">🏆 No.1</div>
+                           <div style="font-size:11px; color:#aaa;">王冠 No.1</div>
+                        </div>
+                        <div class="material-card" onclick="addBadgeObj('✨ 最新版', '✨ Latest', 'dark', 200, 200)">
+                           <div class="pro-badge dark" style="font-size:14px; position:static; display:inline-block; margin-bottom:5px;">✨ 最新版</div>
+                           <div style="font-size:11px; color:#aaa;">最新版</div>
+                        </div>
+                        <div class="material-card" onclick="addBadgeObj('App Store', 'App Store', 'store', 200, 200)">
+                           <div class="pro-badge store" style="font-size:14px; position:static; display:inline-block; margin-bottom:5px;">App Store</div>
+                           <div style="font-size:11px; color:#aaa;">ストア風</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section" style="border-bottom: none;">
+                    <div class="panel-title">アイコン・図形</div>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-arrow-right\'></i>', '<i class=\'ph-fill ph-arrow-right\'></i>', 300, 300, 150, '#000', 'center', null, 'none', 'sans-serif', 'normal')" title="右矢印">
+                            <i class="ph-fill ph-arrow-right" style="font-size:35px; color:#eee;"></i>
+                        </div>
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-arrow-down\'></i>', '<i class=\'ph-fill ph-arrow-down\'></i>', 300, 300, 150, '#000', 'center', null, 'none', 'sans-serif', 'normal')" title="下矢印">
+                            <i class="ph-fill ph-arrow-down" style="font-size:35px; color:#eee;"></i>
+                        </div>
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-check-circle\'></i>', '<i class=\'ph-fill ph-check-circle\'></i>', 300, 300, 150, '#11bb44', 'center', null, 'none', 'sans-serif', 'normal')" title="チェック">
+                            <i class="ph-fill ph-check-circle" style="font-size:35px; color:#11bb44;"></i>
+                        </div>
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-x-circle\'></i>', '<i class=\'ph-fill ph-x-circle\'></i>', 300, 300, 150, '#ff3333', 'center', null, 'none', 'sans-serif', 'normal')" title="バツ">
+                            <i class="ph-fill ph-x-circle" style="font-size:35px; color:#ff3333;"></i>
+                        </div>
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-star\'></i>', '<i class=\'ph-fill ph-star\'></i>', 300, 300, 150, '#ffaa00', 'center', null, 'none', 'sans-serif', 'normal')" title="星">
+                            <i class="ph-fill ph-star" style="font-size:35px; color:#ffaa00;"></i>
+                        </div>
+                        <div class="material-card" onclick="addTextObj('<i class=\'ph-fill ph-heart\'></i>', '<i class=\'ph-fill ph-heart\'></i>', 300, 300, 150, '#ff2255', 'center', null, 'none', 'sans-serif', 'normal')" title="ハート">
+                            <i class="ph-fill ph-heart" style="font-size:35px; color:#ff2255;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Templates -->
+            <div id="tab-templates" class="tab-content">
+                <div class="panel-section" id="template-container" style="border-bottom: none; padding-top: 10px;">
+                    <div class="panel-title" id="template-title" style="margin-bottom: -10px;">テンプレート (48種)</div>
+                    <div style="font-size:11px; color:#888; margin-top:10px;">クリックしてプレビューを確認できます。（デザインタブには自動遷移しません）</div>
+                    <!-- JS Injected -->
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area" id="canvas-area">
+            <div class="preview-container" id="preview-container">
+                <div id="screenshot-canvas">
+                    <div id="bg-pattern"></div>
+                    <div id="split-guide"></div>
+                    <div id="canvas-elements"></div>
+                </div>
+            </div>
+            
+            <!-- Zoom Controls -->
+            <div class="zoom-controls" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 5px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 1000;">
+                <button onclick="setZoom(-0.05)" class="icon-btn" style="border: none; padding: 5px 10px;"><i class="ph ph-minus"></i></button>
+                <span id="zoom-level" style="font-size: 12px; font-weight: bold; width: 40px; text-align: center;">16%</span>
+                <button onclick="setZoom(0.05)" class="icon-btn" style="border: none; padding: 5px 10px;"><i class="ph ph-plus"></i></button>
+                <button onclick="resetZoom()" class="icon-btn" style="border: none; padding: 5px 10px; margin-left: 5px;"><i class="ph ph-arrows-out"></i></button>
+            </div>
+        </div>
+
+        <!-- Detailed Settings Inspector -->
+        <div class="sidebar-right">
+            <div id="empty-state">
+                <i class="ph ph-sliders" style="font-size: 40px; margin-bottom: 15px; display:block; color:#444;"></i>
+                要素をクリックして選択すると<br>詳細な編集メニューが表示されます。
+            </div>
+
+            <!-- Global Element Controls -->
+            <div class="panel-section prop-section" id="prop-global" style="border-bottom: 2px solid #111; padding-bottom: 10px;">
+                <div class="adv-section-title" style="margin-top: 0;">レイヤー順序 (Z-Index)</div>
+                <div class="inspector-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                    <button class="inspector-btn" style="padding: 10px 5px; font-size: 18px;" onclick="changeLayer('front')" title="最前面へ"><i class="ph ph-arrow-line-up"></i></button>
+                    <button class="inspector-btn" style="padding: 10px 5px; font-size: 18px;" onclick="changeLayer(1)" title="前面へ"><i class="ph ph-arrow-up"></i></button>
+                    <button class="inspector-btn" style="padding: 10px 5px; font-size: 18px;" onclick="changeLayer(-1)" title="背面へ"><i class="ph ph-arrow-down"></i></button>
+                    <button class="inspector-btn" style="padding: 10px 5px; font-size: 18px;" onclick="changeLayer('back')" title="最背面へ"><i class="ph ph-arrow-line-down"></i></button>
+                </div>
+            </div>
+
+            <!-- Text Inspector -->
+            <div class="panel-section prop-section" id="prop-text">
+                <div class="panel-title">テキスト・装飾 編集</div>
+                <div class="inspector-row" style="margin-top: 10px;">
+                    <label style="color:var(--accent);"><i class="ph ph-pencil-simple"></i> 内容</label>
+                    <textarea class="inspector-input" id="prop-text-content" oninput="updateSelectedElementContent()"></textarea>
+                </div>
+                
+                
+                <div class="adv-section-title">書体と装飾（リッチテキスト）</div>
+                <div class="inspector-row">
+                    <label>フォント (Font)</label>
+                    <select class="inspector-input" id="prop-text-font" onchange="updateSelectedElementAndDOM()">
+                        <option value="'Noto Sans JP', sans-serif">Noto Sans (標準・モダン)</option>
+                        <option value="'M PLUS Rounded 1c', sans-serif">M PLUS Rounded (丸み・ポップ)</option>
+                        <option value="'Shippori Mincho', serif">明朝体 (高級感・和風)</option>
+                    </select>
+                </div>
+                <div class="inspector-row">
+                    <label>特殊エフェクト (Effect)</label>
+                    <select class="inspector-input" id="prop-text-effect" onchange="updateSelectedElementAndDOM()" style="border-color:var(--accent);">
+                        <option value="normal">なし (Normal)</option>
+                        <option value="outline">✍️ 太い縁取り (Outline)</option>
+                        <option value="marker">🖍 マーカー線 (Marker)</option>
+                        <option value="bg-box">🏷 背景ボックス (Box)</option>
+                        <option value="gradient">🌈 グラデーション (Gradient)</option>
+                        <option value="neon">✨ ネオン発光 (Neon Glow)</option>
+                    </select>
+                </div>
+                <div class="inspector-grid">
+                    <div class="inspector-row">
+                        <label>メインカラー</label>
+                        <input type="color" class="inspector-color" id="prop-text-color" oninput="updateSelectedElementAndDOM()">
+                    </div>
+                    <div class="inspector-row">
+                        <label>配置</label>
+                        <select class="inspector-input" id="prop-text-align" onchange="updateSelectedElementAndDOM()">
+                            <option value="left">左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="adv-section-title">サイズ・詳細調整</div>
+                <div class="inspector-row">
+                    <label>枠の幅 (横幅 / 自動改行)</label>
+                    <div style="display:flex; gap:10px;">
+                        <select class="inspector-input" id="prop-text-width-type" onchange="updateSelectedElementAndDOM()" style="width:100px;">
+                            <option value="auto">自動</option>
+                            <option value="fixed">手動調整</option>
+                        </select>
+                        <input type="range" class="inspector-slider" id="prop-text-width" min="200" max="3000" step="10" value="1000" oninput="document.getElementById('prop-text-width-type').value='fixed'; updateSelectedElementAndDOM()">
+                    </div>
+                </div>
+                <div class="inspector-row">
+                    <label style="display:flex; justify-content:space-between;">フォントサイズ <span id="val-text-size">100px</span></label>
+                    <input type="range" class="inspector-slider" id="prop-text-size" min="30" max="300" oninput="updateSelectedElementAndDOM()">
+                </div>
+                <div class="inspector-row">
+                    <label style="display:flex; justify-content:space-between;">行間 (Line Height) <span id="val-text-lineheight">1.2</span></label>
+                    <input type="range" class="inspector-slider" id="prop-text-lineheight" min="0.8" max="3.0" step="0.1" value="1.2" oninput="updateSelectedElementAndDOM()">
+                </div>
+                <div class="inspector-row">
+                    <label style="display:flex; justify-content:space-between;">文字間隔 (Tracking) <span id="val-text-spacing">-2px</span></label>
+                    <input type="range" class="inspector-slider" id="prop-text-spacing" min="-20" max="100" step="1" value="-2" oninput="updateSelectedElementAndDOM()">
+                </div>
+                <div class="inspector-row inline">
+                    <label>影 (ドロップシャドウ)</label>
+                    <select class="inspector-input" id="prop-text-shadow" onchange="updateSelectedElementAndDOM()" style="width:100px;">
+                        <option value="none">なし</option>
+                        <option value="soft">弱め</option>
+                        <option value="strong">強め</option>
+                    </select>
+                </div>
+
+                <div class="inspector-row" style="margin-top:20px;">
+                    <button class="inspector-btn danger" onclick="deleteSelected()"><i class="ph ph-trash"></i> 削除する</button>
+                </div>
+            </div>
+
+            <!-- Device Inspector -->
+            <div class="panel-section prop-section" id="prop-device">
+                <div class="panel-title">デバイス設定</div>
+                
+                <div class="adv-section-title" style="margin-top: 10px;">画面画像（スクリーンショット）</div>
+                <div class="inspector-row">
+                    <input type="file" id="inspector-device-upload" accept="image/*" style="display:none;" onchange="handleInspectorUpload(event)">
+                    <button class="inspector-btn" onclick="document.getElementById('inspector-device-upload').click()" style="background:var(--accent); border-color:var(--accent);"><i class="ph ph-image"></i> 画像をアップロード</button>
+                </div>
+
+                <div class="adv-section-title">基本設定</div>
+                <div class="inspector-row">
+                    <label>本体カラー</label>
+                    <select class="inspector-input" id="prop-device-color" onchange="updateSelectedElementAndDOM()">
+                        <option value="black">ブラック (Black)</option>
+                        <option value="silver">シルバー (Silver)</option>
+                        <option value="spacegray">スペースグレイ (Space Gray)</option>
+                        <option value="gold">ゴールド (Gold)</option>
+                    </select>
+                </div>
+                <div class="inspector-row">
+                    <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="prop-device-glare" onchange="updateSelectedElementAndDOM()"> 画面ガラス反射 (Glare)</label>
+                </div>
+                <div class="inspector-row">
+                    <label>サイズ (Scale)</label>
+                    <input type="range" class="inspector-slider" id="prop-device-scale" min="0.5" max="1.5" step="0.01" oninput="updateSelectedElementAndDOM()">
+                </div>
+
+                <div class="adv-section-title">3D パースペクティブ</div>
+                <div class="inspector-row">
+                    <label>Y軸回転 (左右)</label>
+                    <input type="range" class="inspector-slider" id="prop-device-ry" min="-60" max="60" value="0" oninput="updateSelectedElementAndDOM()">
+                </div>
+                <div class="inspector-row">
+                    <label>X軸回転 (上下)</label>
+                    <input type="range" class="inspector-slider" id="prop-device-rx" min="-30" max="30" value="0" oninput="updateSelectedElementAndDOM()">
+                </div>
+
+                <div class="adv-section-title">詳細設定</div>
+                <div class="inspector-row">
+                    <label>不透明度 (Opacity)</label>
+                    <input type="range" class="inspector-slider" id="prop-device-opacity" min="0.1" max="1.0" step="0.1" value="1.0" oninput="updateSelectedElementAndDOM()">
+                </div>
+
+                <div class="inspector-row" style="margin-top:20px;">
+                    <button class="inspector-btn danger" onclick="deleteSelected()"><i class="ph ph-trash"></i> 削除する</button>
+                </div>
+            </div>
+            
+            <!-- Badge / Material Inspector -->
+            <div class="panel-section prop-section" id="prop-badge">
+                <div class="panel-title">装飾・素材編集</div>
+                <div class="inspector-row" style="margin-top: 10px;">
+                    <label style="color:var(--accent);"><i class="ph ph-pencil-simple"></i> 内容・テキスト</label>
+                    <input type="text" class="inspector-input" id="prop-badge-content" oninput="updateSelectedElementContent()">
+                </div>
+                <div class="inspector-row">
+                    <label>素材スタイル変更</label>
+                    <select class="inspector-input" id="prop-badge-style" onchange="updateSelectedElementAndDOM()">
+                        <option value="yellow">🏆 ゴールドバッジ</option>
+                        <option value="accent">💎 ブルーバッジ</option>
+                        <option value="dark">🕶 ダークバッジ</option>
+                        <option value="stars">⭐️ 5つ星レビュー</option>
+                        <option value="store">📥 App Store風</option>
+                    </select>
+                </div>
+                <div class="inspector-row">
+                    <label>サイズ調整</label>
+                    <input type="range" class="inspector-slider" id="prop-badge-size" min="30" max="150" oninput="updateSelectedElementAndDOM()">
+                </div>
+                <div class="inspector-row" style="margin-top:20px;">
+                    <button class="inspector-btn danger" onclick="deleteSelected()"><i class="ph ph-trash"></i> 削除する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('screenshot-canvas');
+        const elementsContainer = document.getElementById('canvas-elements');
+        let currentScale = 0.16;
+        let isPanorama = false;
+        let selectedElement = null;
+        let currentLang = 'ja';
+
+        // --- Zoom & Pan Logic ---
+        function setZoom(delta) {
+            currentScale += delta;
+            if(currentScale < 0.05) currentScale = 0.05;
+            if(currentScale > 2.0) currentScale = 2.0;
+            document.documentElement.style.setProperty('--scale', currentScale);
+            document.getElementById('zoom-level').innerText = Math.round(currentScale * 100) + '%';
+        }
+        function resetZoom() {
+            currentScale = Math.max(0.05, Math.min(1, (canvasArea.clientWidth - 80) / canvas.offsetWidth, (canvasArea.clientHeight - 110) / canvas.offsetHeight));
+            document.documentElement.style.setProperty('--scale', currentScale);
+            document.getElementById('zoom-level').innerText = Math.round(currentScale * 100) + '%';
+        }
+        
+        const canvasArea = document.getElementById('canvas-area');
+        canvasArea.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                setZoom(e.deltaY > 0 ? -0.05 : 0.05);
+            }
+        }, {passive: false});
+
+        let isPanning = false, isSpacePressed = false;
+        let panStartX = 0, panStartY = 0, scrollStartX = 0, scrollStartY = 0;
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                isSpacePressed = true;
+                canvasArea.style.cursor = 'grab';
+            }
+        });
+        window.addEventListener('keyup', e => {
+            if (e.code === 'Space') {
+                isSpacePressed = false; isPanning = false;
+                canvasArea.style.cursor = 'default';
+            }
+        });
+        canvasArea.addEventListener('mousedown', e => {
+            if (isSpacePressed) {
+                isPanning = true; canvasArea.style.cursor = 'grabbing';
+                panStartX = e.clientX; panStartY = e.clientY;
+                scrollStartX = canvasArea.scrollLeft; scrollStartY = canvasArea.scrollTop;
+            }
+        });
+        window.addEventListener('mousemove', e => {
+            if (isPanning) {
+                canvasArea.scrollLeft = scrollStartX - (e.clientX - panStartX);
+                canvasArea.scrollTop = scrollStartY - (e.clientY - panStartY);
+            }
+        });
+        window.addEventListener('mouseup', () => {
+            if (isPanning) {
+                isPanning = false;
+                if(isSpacePressed) canvasArea.style.cursor = 'grab';
+            }
+        });
+
+        // --- Tabs Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-tab-' + tabId).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // --- Free Backgrounds (Unsplash) ---
+        const freeBackgrounds = [
+            'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1242&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1557683311-eac922347aa1?q=80&w=1242&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?q=80&w=1242&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1242&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1242&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1242&auto=format&fit=crop'
+        ];
+        const bgList = document.getElementById('free-bg-list');
+        freeBackgrounds.forEach(url => {
+            const btn = document.createElement('div');
+            btn.className = 'bg-thumb';
+            btn.style.backgroundImage = `url(${url})`;
+            btn.onclick = () => setBackgroundImage(url);
+            bgList.appendChild(btn);
+        });
+
+        function setBackgroundImage(url) {
+            canvas.style.background = `url('${url}') center/cover no-repeat`;
+            document.getElementById('bg-overlay').checked = true;
+            toggleOverlay();
+        }
+
+        function toggleOverlay() {
+            const overlay = document.getElementById('bg-pattern');
+            if(document.getElementById('bg-overlay').checked) {
+                overlay.style.display = 'block';
+                overlay.style.background = 'rgba(0,0,0,0.4)';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        // --- Templates (Expanded with Text Effects) ---
+        const templates = [
+
+            { group_ja: '👑 スタンダード (基本6種)', group_en: '👑 Standard', items: [
+                { id: 1, name_ja: "01. クラシック正面", name_en: "01. Classic", size: "iphone", bg: ["#1e3c72", "#2a5298"], elements: [ { t: 'text', html_ja: 'タイム差を徹底分析！', html_en: 'Analyze Time Diff!', x: 121, y: 150, size: 100, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-black', x: 121, y: 450, ry: 0, rx: 0, scale:1 } ] },
+                { id: 2, name_ja: "02. ダークモダン", name_en: "02. Dark Modern", size: "iphone", bg: ["#000000", "#434343"], elements: [ { t: 'badge', text_ja: '✨ 最新版', text_en: '✨ Latest', style: 'dark', x: 400, y: 150 }, { t: 'text', html_ja: 'プロの分析を<br>あなたの手に。', html_en: 'Pro Analysis<br>in your hands.', x: 121, y: 350, size: 110, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-silver', x: 121, y: 700, ry: 0, rx: 0, scale:1 } ] },
+                { id: 3, name_ja: "03. ミニマルホワイト", name_en: "03. Minimal White", size: "iphone", bg: ["#ffffff", "#e5e5ea"], elements: [ { t: 'text', html_ja: '洗練された操作性', html_en: 'Intuitive Controls', x: 121, y: 200, size: 100, color: '#111', align: 'center', w: 1000, shadow: 'none' }, { t: 'device', type: 'iphone-silver', x: 121, y: 450, ry: 0, rx: 0, scale:1 } ] },
+                { id: 4, name_ja: "04. アプリフォーカス", name_en: "04. App Focus", size: "iphone", bg: ["#11998e", "#38ef7d"], elements: [ { t: 'text', html_ja: '迷わないデザイン', html_en: 'Simple UI', x: 121, y: 150, size: 100, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-black', x: 121, y: 350, ry: 0, rx: 0, scale:1.3 } ] },
+                { id: 5, name_ja: "05. 下部テキスト", name_en: "05. Bottom Text", size: "iphone", bg: ["#8E2DE2", "#4A00E0"], elements: [ { t: 'device', type: 'iphone-silver', x: 121, y: 150, ry: 0, rx: 0, scale:0.9 }, { t: 'text', html_ja: 'すぐに始められます', html_en: 'Start Instantly', x: 121, y: 2200, size: 100, color: '#fff', align: 'center', w: 1000 } ] },
+                { id: 6, name_ja: "06. ポップアップ", name_en: "06. Pop-up", size: "iphone", bg: ["#f12711", "#f5af19"], elements: [ { t: 'badge', text_ja: '🏆 No.1', text_en: '🏆 No.1', style: 'yellow', x: 100, y: 150 }, { t: 'device', type: 'iphone-black', x: 200, y: 450, ry: 0, rx: 0, scale: 1.1 } ] }
+            ]},
+            { group_ja: '🧊 3D パースペクティブ (6種)', group_en: '🧊 3D Perspective', items: [
+                { id: 7, name_ja: "07. 3D パース (右)", name_en: "07. 3D Right", size: "iphone", bg: ["#0f2027", "#203a43"], elements: [ { t: 'text', html_ja: '直感的な<br>コントロール', html_en: 'Intuitive<br>Controls', x: 100, y: 150, size: 120, color: '#fff', align: 'left', w: 1000 }, { t: 'device', type: 'iphone-silver', x: 250, y: 550, ry: -25, rx: 10, scale: 0.95 } ] },
+                { id: 8, name_ja: "08. 3D パース (左)", name_en: "08. 3D Left", size: "iphone", bg: ["#141E30", "#243B55"], elements: [ { t: 'text', html_ja: 'フォームを可視化', html_en: 'Visualize Form', x: 100, y: 150, size: 110, color: '#fff', align: 'right', w: 1000 }, { t: 'device', type: 'iphone-black', x: -50, y: 550, ry: 25, rx: 10, scale: 0.95 } ] },
+                { id: 9, name_ja: "09. ダブル 3D 比較", name_en: "09. Double 3D", size: "iphone", bg: ["#8A2387", "#E94057"], elements: [ { t: 'text', html_ja: 'Before / After', html_en: 'Before / After', x: 121, y: 100, size: 130, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-black', x: -100, y: 350, ry: 15, rx: 5, scale: 0.85 }, { t: 'device', type: 'iphone-silver', x: 250, y: 600, ry: -15, rx: 5, scale: 0.85 } ] },
+                { id: 10, name_ja: "10. 3D 浮遊", name_en: "10. Floating 3D", size: "iphone", bg: ["#00c6ff", "#0072ff"], elements: [ { t: 'device', type: 'iphone-silver', x: 121, y: 650, ry: -15, rx: -15, scale: 1.1 }, { t: 'text', html_ja: 'クラウド同期', html_en: 'Cloud Sync', x: 121, y: 150, size: 120, color: '#fff', align: 'center', w: 1000 } ] },
+                { id: 11, name_ja: "11. 3D ダイナミック", name_en: "11. Dynamic 3D", size: "iphone", bg: ["#f12711", "#f5af19"], elements: [ { t: 'device', type: 'iphone-black', x: 121, y: 450, ry: 35, rx: 20, scale: 1.1 } ] },
+                { id: 12, name_ja: "12. 3D ミニマル", name_en: "12. 3D Minimal", size: "iphone", bg: ["#ffffff", "#e5e5ea"], elements: [ { t: 'text', html_ja: 'シンプルで美しい', html_en: 'Simple & Beautiful', x: 121, y: 150, size: 90, color: '#111', align: 'center', w: 1000, shadow: 'none' }, { t: 'device', type: 'iphone-silver', x: 121, y: 450, ry: 10, rx: 10, scale: 0.95 } ] }
+            ]},
+            { group_ja: '🌄 パノラマ (2画面セット 6種)', group_en: '🌄 Panorama', items: [
+                { id: 13, name_ja: "13. パノラマ 正面", name_en: "13. Panorama Flat", size: "iphone-pano", bg: ["#0f2027", "#2c5364"], elements: [ { t: 'text', html_ja: 'ライバルとの差はここにある', html_en: 'Find the difference', x: 0, y: 250, size: 130, color: '#fff', align: 'center', w: 2484 }, { t: 'device', type: 'iphone-black', x: 121, y: 650, ry:0, rx:0, scale:1 }, { t: 'device', type: 'iphone-silver', x: 1363, y: 650, ry:0, rx:0, scale:1 } ] },
+                { id: 14, name_ja: "14. パノラマ 3D", name_en: "14. Panorama 3D", size: "iphone-pano", bg: ["#141E30", "#243B55"], elements: [ { t: 'text', html_ja: '並べて比較、違いを実感。', html_en: 'Compare side by side.', x: 0, y: 200, size: 150, color: '#fff', align: 'center', w: 2484 }, { t: 'device', type: 'iphone-black', x: 150, y: 550, ry: 20, rx: 10, scale: 0.9 }, { t: 'device', type: 'iphone-silver', x: 1334, y: 550, ry: -20, rx: 10, scale: 0.9 } ] },
+                { id: 15, name_ja: "15. パノラマ 巨大", name_en: "15. Panorama Huge", size: "iphone-pano", bg: ["#ff7e5f", "#feb47b"], elements: [ { t: 'text', html_ja: '一目でわかる', html_en: 'See at a glance', x: 0, y: 200, size: 160, color: '#fff', align: 'center', w: 2484 }, { t: 'device', type: 'iphone-black', x: 742, y: 650, ry: 0, rx: 0, scale: 1.2 } ] },
+                { id: 16, name_ja: "16. パノラマ フロー", name_en: "16. Panorama Flow", size: "iphone-pano", bg: ["#6a11cb", "#2575fc"], elements: [ { t: 'device', type: 'iphone-silver', x: -200, y: 400, ry: 15, rx: 5, scale: 0.8 }, { t: 'device', type: 'iphone-black', x: 900, y: 600, ry: 0, rx: 0, scale: 1 }, { t: 'device', type: 'iphone-silver', x: 2000, y: 400, ry: -15, rx: 5, scale: 0.8 } ] },
+                { id: 17, name_ja: "17. パノラマ 対比", name_en: "17. Panorama VS", size: "iphone-pano", bg: ["#1e3c72", "#2a5298"], elements: [ { t: 'text', html_ja: '過去の自分を超えろ', html_en: 'Beat your past self', x: 0, y: 200, size: 150, color: '#fff', align: 'center', w: 2484 }, { t: 'device', type: 'iphone-black', x: 121, y: 700, ry: -10, rx: 5, scale: 0.9 }, { t: 'device', type: 'iphone-silver', x: 1363, y: 500, ry: 10, rx: 5, scale: 0.9 } ] },
+                { id: 18, name_ja: "18. パノラマ ライト", name_en: "18. Panorama Light", size: "iphone-pano", bg: ["#ffffff", "#e5e5ea"], elements: [ { t: 'text', html_ja: 'クリアなデータ', html_en: 'Clear Data', x: 0, y: 200, size: 140, color: '#111', align: 'center', w: 2484, shadow:'none' }, { t: 'device', type: 'iphone-silver', x: 121, y: 550, ry: 0, rx: 0, scale: 1 }, { t: 'device', type: 'iphone-black', x: 1363, y: 550, ry: 0, rx: 0, scale: 1 } ] }
+            ]},
+            { group_ja: '📝 特徴説明・レビュー (6種)', group_en: '📝 Features & Reviews', items: [
+                { id: 19, name_ja: "19. 特徴リスト (右)", name_en: "19. Features Right", size: "iphone", bg: ["#6a11cb", "#2575fc"], elements: [ { t: 'text', html_ja: '✅ 2動画を同時再生<br><br>✅ タイム差を自動計算<br><br>✅ 骨格検出でブレ分析', html_en: '✅ Dual Playback<br><br>✅ Auto Time Calc<br><br>✅ AI Skeleton', x: 50, y: 150, size: 70, color: '#fff', align: 'left', w: 1000 }, { t: 'device', type: 'iphone-black', x: 300, y: 800, ry: 0, rx: 0, scale: 1 } ] },
+                { id: 20, name_ja: "20. 特徴リスト (左)", name_en: "20. Features Left", size: "iphone", bg: ["#8E2DE2", "#4A00E0"], elements: [ { t: 'text', html_ja: '✅ 分析結果を共有<br><br>✅ クラウド保存<br><br>✅ 簡単エクスポート', html_en: '✅ Share Results<br><br>✅ Cloud Save<br><br>✅ Easy Export', x: 100, y: 150, size: 70, color: '#fff', align: 'right', w: 1000 }, { t: 'device', type: 'iphone-silver', x: -100, y: 800, ry: 0, rx: 0, scale: 1 } ] },
+                { id: 21, name_ja: "21. レビュー引用", name_en: "21. Testimonial", size: "iphone", bg: ["#ff7e5f", "#feb47b"], elements: [ { t: 'text', html_ja: '「タイムが劇的に縮まりました！」<br><span style="font-size:50px">ー 陸上競技コーチ</span>', html_en: '"My lap time improved!"<br><span style="font-size:50px">- Track Coach</span>', x: 121, y: 150, size: 70, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-black', x: 121, y: 450, ry: 0, rx: 0, scale: 1 } ] },
+                { id: 22, name_ja: "22. 強調メッセージ", name_en: "22. Strong Message", size: "iphone", bg: ["#000000", "#e74c3c"], elements: [ { t: 'text', html_ja: 'もう、感覚には<br>頼らない。', html_en: 'Stop guessing.<br>Start measuring.', x: 121, y: 300, size: 130, color: '#fff', align: 'center', w: 1000 }, { t: 'device', type: 'iphone-black', x: 121, y: 900, ry: 0, rx: 0, scale: 1 } ] },
+                { id: 23, name_ja: "23. 4つのステップ", name_en: "23. 4 Steps", size: "iphone", bg: ["#11998e", "#38ef7d"], elements: [ { t: 'text', html_ja: '1. 撮る<br>2. 並べる<br>3. 比較する<br>4. 改善する', html_en: '1. Record<br>2. Align<br>3. Compare<br>4. Improve', x: 100, y: 150, size: 90, color: '#fff', align: 'left', w: 1000 }, { t: 'device', type: 'iphone-silver', x: 400, y: 800, ry: 10, rx: 5, scale: 1 } ] },
+                { id: 24, name_ja: "24. ミニマル説明", name_en: "24. Minimal Desc", size: "iphone", bg: ["#ffffff", "#e5e5ea"], elements: [ { t: 'text', html_ja: '必要な機能だけを、<br>最高のかたちで。', html_en: 'Only what you need.<br>Perfected.', x: 121, y: 150, size: 80, color: '#111', align: 'center', w: 1000, shadow:'none' }, { t: 'device', type: 'iphone-silver', x: 121, y: 600, ry: 0, rx: 0, scale: 1.1 } ] }
+            ]},
+            { group_ja: '📱 iPad 専用 (6種)', group_en: '📱 iPad Exclusive', items: [
+                { id: 25, name_ja: "25. iPad 正面", name_en: "25. iPad Front", size: "ipad", bg: ["#8A2387", "#E94057"], elements: [ { t: 'text', html_ja: '大画面で細部まで分析', html_en: 'Analyze on big screen', x: 224, y: 150, size: 120, color: '#fff', align: 'center', w: 1600 }, { t: 'device', type: 'ipad-silver', x: 174, y: 450, ry:0, rx:0, scale:1 } ] },
+                { id: 26, name_ja: "26. iPad 3D パース", name_en: "26. iPad 3D", size: "ipad", bg: ["#1e3c72", "#2a5298"], elements: [ { t: 'text', html_ja: 'プロフェッショナルな視点', html_en: 'Professional View', x: 224, y: 120, size: 130, color: '#fff', align: 'center', w: 1600 }, { t: 'device', type: 'ipad-black', x: 300, y: 500, ry: -15, rx: 15, scale: 0.95 } ] },
+                { id: 27, name_ja: "27. iPad & iPhone", name_en: "27. iPad & iPhone", size: "ipad", bg: ["#3a1c71", "#d76d77"], elements: [ { t: 'text', html_ja: 'すべてのデバイスで最高の体験を', html_en: 'Best on all devices', x: 224, y: 120, size: 110, color: '#fff', align: 'center', w: 1600 }, { t: 'device', type: 'ipad-silver', x: 0, y: 450, ry:0, rx:0, scale: 0.9 }, { t: 'device', type: 'iphone-black', x: 1000, y: 700, ry:0, rx:0, scale: 1.1 } ] },
+                { id: 28, name_ja: "28. iPad パノラマ", name_en: "28. iPad Panorama", size: "ipad-pano", bg: ["#000000", "#434343"], elements: [ { t: 'text', html_ja: 'チーム全員で共有するデータ', html_en: 'Share with your team', x: 0, y: 200, size: 160, color: '#fff', align: 'center', w: 4096 }, { t: 'device', type: 'ipad-black', x: -100, y: 600, ry: 15, rx: 10, scale: 0.85 }, { t: 'device', type: 'ipad-silver', x: 2100, y: 600, ry: -15, rx: 10, scale: 0.85 } ] },
+                { id: 29, name_ja: "29. iPad ダブル正面", name_en: "29. iPad Double Front", size: "ipad-pano", bg: ["#0f2027", "#2c5364"], elements: [ { t: 'text', html_ja: '比較も大画面で快適に', html_en: 'Comfortable Comparison', x: 0, y: 200, size: 160, color: '#fff', align: 'center', w: 4096 }, { t: 'device', type: 'ipad-silver', x: 100, y: 600, ry: 0, rx: 0, scale: 0.9 }, { t: 'device', type: 'ipad-black', x: 2300, y: 600, ry: 0, rx: 0, scale: 0.9 } ] },
+                { id: 30, name_ja: "30. iPad ダークミニマル", name_en: "30. iPad Dark Minimal", size: "ipad", bg: ["#111111", "#111111"], elements: [ { t: 'text', html_ja: '究極の集中', html_en: 'Ultimate Focus', x: 224, y: 150, size: 140, color: '#fff', align: 'center', w: 1600 }, { t: 'device', type: 'ipad-black', x: 174, y: 550, ry:0, rx:0, scale:1.1 } ] }
+            ]}
+        ];
+
+        function renderTemplates() {
+            const container = document.getElementById('template-container');
+            container.innerHTML = `<div class="panel-title" id="template-title" style="margin-bottom:-10px;">${currentLang === 'ja' ? 'テンプレート (48種)' : 'Pro Templates'}</div>`;
+            container.innerHTML += `<div style="font-size:11px; color:#888; margin-top:10px;">クリックしてプレビュー。（デザインタブには自動遷移しません）</div>`;
+            
+            templates.forEach(group => {
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'template-group-title';
+                groupTitle.innerText = currentLang === 'ja' ? group.group_ja : group.group_en;
+                container.appendChild(groupTitle);
+                
+                const grid = document.createElement('div');
+                grid.className = 'template-grid';
+                
+                group.items.forEach(tpl => {
+                    const btn = document.createElement('button');
+                    btn.className = 'template-btn';
+                    btn.innerText = currentLang === 'ja' ? tpl.name_ja : tpl.name_en;
+                    btn.onclick = () => {
+                        loadTemplate(tpl);
+                    };
+                    grid.appendChild(btn);
+                });
+                container.appendChild(grid);
+            });
+        }
+
+        function changeLanguage() {
+            currentLang = document.getElementById('ui-lang').value;
+            renderTemplates();
+            
+            const textBlocks = elementsContainer.querySelectorAll('.element[data-type="text"]');
+            textBlocks.forEach(el => { if(el.dataset[currentLang]) el.querySelector('h1').innerHTML = el.dataset[currentLang]; });
+            const badges = elementsContainer.querySelectorAll('.element[data-type="badge"]');
+            badges.forEach(el => { if(el.dataset[currentLang]) el.querySelector('span').innerHTML = el.dataset[currentLang]; });
+            
+            if(selectedElement) selectElement(selectedElement, selectedElement.dataset.type);
+        }
+
+        function updateCanvasSize(sizeVal) {
+            const val = sizeVal || document.getElementById('canvas-size').value;
+            if(sizeVal) document.getElementById('canvas-size').value = val;
+            
+            const root = document.documentElement;
+            const guide = document.getElementById('split-guide');
+            isPanorama = false; guide.style.display = 'none';
+
+            if(val === 'iphone') { root.style.setProperty('--canvas-w', '1242px'); root.style.setProperty('--canvas-h', '2688px'); }
+            if(val === 'iphone-pano') { root.style.setProperty('--canvas-w', '2484px'); root.style.setProperty('--canvas-h', '2688px'); isPanorama = true; guide.style.display = 'block'; }
+            if(val === 'ipad') { root.style.setProperty('--canvas-w', '2048px'); root.style.setProperty('--canvas-h', '2732px'); }
+            if(val === 'ipad-pano') { root.style.setProperty('--canvas-w', '4096px'); root.style.setProperty('--canvas-h', '2732px'); isPanorama = true; guide.style.display = 'block'; }
+        }
+
+        function customColor() {
+            const c1 = document.getElementById('bg-c1').value;
+            const c2 = document.getElementById('bg-c2').value;
+            canvas.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+            document.getElementById('bg-pattern').style.display = 'none'; 
+            document.getElementById('bg-overlay').checked = false;
+        }
+
+        // --- Select & Inspector Logic ---
+        function clearSelection() {
+            if(selectedElement) selectedElement.classList.remove('selected');
+            selectedElement = null;
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelectorAll('.prop-section').forEach(el => el.classList.remove('active'));
+        }
+
+        function selectElement(el, type) {
+            if(selectedElement !== el) {
+                clearSelection();
+                selectedElement = el;
+                el.classList.add('selected');
+            }
+            document.getElementById('empty-state').style.display = 'none';
+            document.querySelectorAll('.prop-section').forEach(p => p.classList.remove('active'));
+            document.getElementById('prop-global').classList.add('active');
+            document.getElementById('prop-' + type).classList.add('active');
+            
+            if(type === 'text') {
+                const h1 = el.querySelector('h1');
+                document.getElementById('prop-text-content').value = h1.innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
+                
+                // Read from dataset to populate inputs correctly
+                document.getElementById('prop-text-color').value = el.dataset.color || '#ffffff';
+                document.getElementById('prop-text-font').value = el.dataset.font || "'Noto Sans JP', sans-serif";
+                document.getElementById('prop-text-effect').value = el.dataset.effect || "normal";
+                document.getElementById('prop-text-shadow').value = el.dataset.shadow || "none";
+                
+                const w = el.style.width;
+                if (!w || w === 'max-content' || w === 'auto') {
+                    document.getElementById('prop-text-width-type').value = 'auto';
+                } else {
+                    document.getElementById('prop-text-width-type').value = 'fixed';
+                    document.getElementById('prop-text-width').value = parseInt(w);
+                }
+                
+                document.getElementById('prop-text-size').value = parseInt(el.style.fontSize) || 100;
+                document.getElementById('val-text-size').innerText = document.getElementById('prop-text-size').value + 'px';
+                
+                document.getElementById('prop-text-align').value = el.style.textAlign || 'center';
+                
+                document.getElementById('prop-text-lineheight').value = parseFloat(h1.style.lineHeight) || 1.2;
+                document.getElementById('val-text-lineheight').innerText = document.getElementById('prop-text-lineheight').value;
+                
+                document.getElementById('prop-text-spacing').value = parseInt(h1.style.letterSpacing) || -2;
+                document.getElementById('val-text-spacing').innerText = document.getElementById('prop-text-spacing').value + 'px';
+            } 
+            else if (type === 'device') {
+                const tr = el.style.transform;
+                document.getElementById('prop-device-ry').value = tr.match(/rotateY\(([-0-9.]+)deg\)/) ? tr.match(/rotateY\(([-0-9.]+)deg\)/)[1] : 0;
+                document.getElementById('prop-device-rx').value = tr.match(/rotateX\(([-0-9.]+)deg\)/) ? tr.match(/rotateX\(([-0-9.]+)deg\)/)[1] : 0;
+                document.getElementById('prop-device-scale').value = tr.match(/scale\(([-0-9.]+)\)/) ? tr.match(/scale\(([-0-9.]+)\)/)[1] : 1;
+                document.getElementById('prop-device-opacity').value = el.style.opacity || 1.0;
+                const frame = el.querySelector('.device-frame');
+                let color = 'natural';
+                if(frame.classList.contains('white')) color = 'white';
+                if(frame.classList.contains('blue')) color = 'blue';
+                if(frame.classList.contains('black')) color = 'black';
+                if(frame.classList.contains('silver')) color = 'white'; // fallback
+                if(frame.classList.contains('spacegray')) color = 'natural'; // fallback
+                if(frame.classList.contains('gold')) color = 'natural'; // fallback
+                document.getElementById('prop-device-color').value = color;
+                document.getElementById('prop-device-glare').checked = frame.classList.contains('glare-on');
+            }
+            else if (type === 'badge') {
+                const span = el.querySelector('span');
+                document.getElementById('prop-badge-content').value = span.innerText;
+                document.getElementById('prop-badge-size').value = parseInt(window.getComputedStyle(el).fontSize) || 60;
+                let style = 'yellow';
+                ['dark','accent','stars','store'].forEach(s => { if(el.classList.contains(s)) style = s; });
+                document.getElementById('prop-badge-style').value = style;
+            }
+        }
+
+        function updateSelectedElementContent() {
+            if(!selectedElement) return;
+            if(selectedElement.dataset.type === 'text') {
+                const h1 = selectedElement.querySelector('h1');
+                h1.textContent = document.getElementById('prop-text-content').value;
+                selectedElement.dataset[currentLang] = h1.innerHTML;
+            }
+            else if (selectedElement.dataset.type === 'badge') {
+                const span = selectedElement.querySelector('span');
+                span.innerText = document.getElementById('prop-badge-content').value;
+                selectedElement.dataset[currentLang] = span.innerHTML;
+            }
+        }
+
+        // Called when user changes sliders/dropdowns in the inspector
+        function updateSelectedElementAndDOM() {
+            if(!selectedElement) return;
+            
+            if(selectedElement.dataset.type === 'text') {
+                const props = {
+                    size: document.getElementById('prop-text-size').value,
+                    color: document.getElementById('prop-text-color').value,
+                    align: document.getElementById('prop-text-align').value,
+                    lineHeight: document.getElementById('prop-text-lineheight').value,
+                    spacing: document.getElementById('prop-text-spacing').value,
+                    font: document.getElementById('prop-text-font').value,
+                    effect: document.getElementById('prop-text-effect').value,
+                    shadow: document.getElementById('prop-text-shadow').value,
+                    widthType: document.getElementById('prop-text-width-type').value,
+                    width: document.getElementById('prop-text-width').value
+                };
+                
+                document.getElementById('val-text-size').innerText = props.size + 'px';
+                document.getElementById('val-text-lineheight').innerText = props.lineHeight;
+                document.getElementById('val-text-spacing').innerText = props.spacing + 'px';
+                
+                // Save back to dataset
+                selectedElement.dataset.color = props.color;
+                selectedElement.dataset.font = props.font;
+                selectedElement.dataset.effect = props.effect;
+                selectedElement.dataset.shadow = props.shadow;
+                selectedElement.style.fontSize = props.size + 'px'; // store on wrapper for reference
+                selectedElement.style.textAlign = props.align;
+                
+                if (props.widthType === 'auto') {
+                    selectedElement.style.width = 'max-content';
+                } else {
+                    selectedElement.style.width = props.width + 'px';
+                }
+                
+                applyTextStyles(selectedElement, props);
+            }
+            else if (selectedElement.dataset.type === 'device') {
+                const ry = document.getElementById('prop-device-ry').value;
+                const rx = document.getElementById('prop-device-rx').value;
+                const sc = document.getElementById('prop-device-scale').value;
+                selectedElement.style.transform = `perspective(2000px) rotateY(${ry}deg) rotateX(${rx}deg) rotateZ(0deg) scale(${sc})`;
+                selectedElement.style.opacity = document.getElementById('prop-device-opacity').value;
+                const frame = selectedElement.querySelector('.device-frame');
+                frame.classList.remove('black', 'white', 'natural', 'blue', 'silver', 'spacegray', 'gold');
+                frame.classList.add(document.getElementById('prop-device-color').value);
+                if(document.getElementById('prop-device-glare').checked) {
+                    frame.classList.add('glare-on');
+                } else {
+                    frame.classList.remove('glare-on');
+                }
+            }
+            else if (selectedElement.dataset.type === 'badge') {
+                selectedElement.style.fontSize = document.getElementById('prop-badge-size').value + 'px';
+                const style = document.getElementById('prop-badge-style').value;
+                selectedElement.className = `element pro-badge ${style}`;
+                if(selectedElement.classList.contains('selected')) selectedElement.classList.add('selected');
+            }
+        }
+
+        // Central logic to apply text effects (Outline, Gradient, etc)
+        function applyTextStyles(el, props) {
+            const h1 = el.querySelector('h1');
+            
+            // Base properties
+            h1.style.fontSize = props.size + 'px';
+            h1.style.fontFamily = props.font;
+            h1.style.lineHeight = props.lineHeight;
+            h1.style.letterSpacing = props.spacing + 'px';
+            h1.style.fontWeight = '900';
+            
+            // Reset complex properties
+            h1.style.background = 'none';
+            h1.style.webkitBackgroundClip = 'initial';
+            h1.style.webkitTextFillColor = 'initial';
+            h1.style.webkitTextStroke = '0px';
+            h1.style.padding = '0';
+            h1.style.borderRadius = '0';
+            h1.style.display = 'block';
+
+            // Base Shadow
+            const shadow = props.shadow;
+            h1.style.textShadow = shadow === 'none' ? 'none' : shadow === 'soft' ? '0 4px 10px rgba(0,0,0,0.3)' : '0 10px 30px rgba(0,0,0,0.5)';
+
+            const effect = props.effect;
+            const color = props.color;
+
+            if (effect === 'normal') {
+                h1.style.color = color;
+            } 
+            else if (effect === 'outline') {
+                h1.style.webkitTextStroke = `8px ${color}`;
+                h1.style.color = '#ffffff';
+                h1.style.textShadow = 'none';
+            } 
+            else if (effect === 'marker') {
+                h1.style.background = `linear-gradient(transparent 60%, ${color} 60%)`;
+                h1.style.display = 'inline-block';
+                h1.style.color = '#111111'; // Dark text for readability on markers
+            } 
+            else if (effect === 'bg-box') {
+                h1.style.background = color;
+                h1.style.color = '#ffffff';
+                h1.style.padding = '10px 40px';
+                h1.style.borderRadius = '20px';
+                h1.style.display = 'inline-block';
+            } 
+            else if (effect === 'gradient') {
+                h1.style.background = `linear-gradient(135deg, ${color}, #ffffff)`;
+                h1.style.webkitBackgroundClip = 'text';
+                h1.style.webkitTextFillColor = 'transparent';
+                h1.style.display = 'inline-block';
+            } 
+            else if (effect === 'neon') {
+                h1.style.color = '#ffffff';
+                h1.style.textShadow = `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}`;
+            }
+        }
+
+        async function handleInspectorUpload(e) {
+            const file = e.target.files[0];
+            const target = selectedElement;
+            e.target.value = '';
+            if (!file || !target) return;
+            try {
+                const url = await readImage(file);
+                if (!target.isConnected) return;
+                target.querySelector('img').src = url;
+                target.querySelector('img').style.display = 'block';
+                target.querySelector('.placeholder').style.display = 'none';
+                commit();
+            } catch (error) { toast(error.message); }
+        }
+
+        function deleteSelected() {
+            if(selectedElement) { selectedElement.remove(); clearSelection(); }
+        }
+
+        document.getElementById('preview-container').addEventListener('mousedown', e => {
+            if(isSpacePressed) return;
+            if(e.target.id === 'screenshot-canvas' || e.target.id === 'bg-pattern') clearSelection();
+        });
+
+        function changeLayer(action) {
+            if(!selectedElement) return;
+            let currentZ = parseInt(selectedElement.style.zIndex) || 20;
+            
+            const allElements = Array.from(elementsContainer.querySelectorAll('.element'));
+            let maxZ = 20, minZ = 20;
+            allElements.forEach(el => {
+                if(el === selectedElement) return;
+                const z = parseInt(el.style.zIndex) || 20;
+                if(z > maxZ) maxZ = z;
+                if(z < minZ) minZ = z;
+            });
+
+            if(action === 1) {
+                selectedElement.style.zIndex = currentZ + 1;
+            } else if(action === -1) {
+                selectedElement.style.zIndex = Math.max(1, currentZ - 1);
+            } else if(action === 'front') {
+                selectedElement.style.zIndex = maxZ + 1;
+            } else if(action === 'back') {
+                selectedElement.style.zIndex = Math.max(1, minZ - 1);
+            }
+        }
+
+        // --- Elements Logic ---
+        function addTextObj(html_ja, html_en, x, y, size, color, align, w, shadow, font, effect) {
+            const el = document.createElement('div');
+            el.className = 'element text-block';
+            el.dataset.type = 'text'; 
+            el.dataset.ja = html_ja; 
+            el.dataset.en = html_en;
+            
+            el.dataset.color = color || '#ffffff';
+            el.dataset.font = font || "'Noto Sans JP', sans-serif";
+            el.dataset.effect = effect || "normal";
+            el.dataset.shadow = shadow || "none";
+            
+            el.style.top = y + 'px'; 
+            el.style.left = x + 'px'; 
+            el.style.textAlign = align || 'center';
+            if(w) el.style.width = w + 'px';
+            
+            const h1 = document.createElement('h1');
+            h1.innerHTML = currentLang === 'ja' ? html_ja : html_en;
+            el.appendChild(h1);
+            
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            el.appendChild(handle);
+            
+            elementsContainer.appendChild(el);
+            makeDraggableAndSelectable(el, 'text');
+            
+            // Apply initial styles bypassing the UI inputs (since it might not be selected)
+            applyTextStyles(el, {
+                size: size,
+                color: el.dataset.color,
+                align: el.style.textAlign,
+                lineHeight: 1.2,
+                spacing: -2,
+                font: el.dataset.font,
+                effect: el.dataset.effect,
+                shadow: el.dataset.shadow
+            });
+            el.style.fontSize = size + 'px'; // store for inspector reference
+        }
+
+        function addText() { addTextObj('新しいテキスト', 'New Text', 200, 200, 100, '#ffffff', 'center', 1000); }
+
+        function addDeviceObj(type, x, y, ry = 0, rx = 0, scale = 1) {
+            const isIpad = type.includes('ipad');
+            let colorClass = 'natural'; // default
+            if(type.includes('silver')) colorClass = 'white';
+            if(type.includes('black')) colorClass = 'black';
+            
+            const el = document.createElement('div');
+            el.className = `element device-wrapper`;
+            el.dataset.type = 'device';
+            el.style.top = y + 'px'; el.style.left = x + 'px';
+            el.style.transform = `perspective(2000px) rotateY(${ry}deg) rotateX(${rx}deg) rotateZ(0deg) scale(${scale})`;
+            
+            let html = `<div class="device-frame ${isIpad ? 'ipad' : ''} ${colorClass}">`;
+            
+            if(!isIpad) {
+                // iPhone 15 Pro hardware details
+                html += `
+                <div class="device-hardware-buttons">
+                    <div class="button-action"></div>
+                    <div class="button-vol-up"></div>
+                    <div class="button-vol-down"></div>
+                    <div class="button-power"></div>
+                </div>
+                <div class="device-dynamic-island">
+                    <div class="island-sensor"></div>
+                    <div class="island-camera"></div>
+                </div>`;
+            } else {
+                html += `<div class="device-camera-ipad"></div>`;
+            }
+            
+            html += `<div class="device-glare"></div>`;
+            html += `<div class="device-screen">
+                        <img src="" style="display:none; z-index:2;">
+                        <div class="placeholder" style="text-align:center; z-index:1;">ここにスクリーンショット<br><span style="font-size:30px;">選択して右側から画像をアップロード</span></div>
+                     </div></div>`;
+            el.innerHTML = html;
+            elementsContainer.appendChild(el);
+            makeDraggableAndSelectable(el, 'device');
+        }
+
+        function addDevice(type) { addDeviceObj(type, 200, 400, 0, 0, 1); }
+
+        function addBadgeObj(text_ja, text_en, styleClass, x, y) {
+            const el = document.createElement('div');
+            el.className = `element pro-badge ${styleClass}`;
+            el.dataset.type = 'badge'; el.dataset.ja = text_ja; el.dataset.en = text_en;
+            el.style.top = y + 'px'; el.style.left = x + 'px'; el.style.fontSize = '60px';
+            el.innerHTML = `<span>${currentLang === 'ja' ? text_ja : text_en}</span>`;
+            elementsContainer.appendChild(el);
+            makeDraggableAndSelectable(el, 'badge');
+        }
+
+        // --- Load Template ---
+        function loadTemplate(tpl) {
+            elementsContainer.innerHTML = ''; 
+            updateCanvasSize(tpl.size);
+            document.getElementById('bg-c1').value = tpl.bg[0];
+            document.getElementById('bg-c2').value = tpl.bg[1];
+            customColor();
+
+            tpl.elements.forEach(e => {
+                if(e.t === 'text') addTextObj(e.html_ja || e.text_ja || e.text, e.html_en || e.text_en || e.text, e.x, e.y, e.size, e.color, e.align, e.w, e.shadow, e.font, e.effect);
+                if(e.t === 'device') addDeviceObj(e.type, e.x, e.y, e.ry || 0, e.rx || 0, e.scale || 1);
+                if(e.t === 'badge') addBadgeObj(e.text_ja || e.text, e.text_en || e.text, e.style, e.x, e.y);
+            });
+            clearSelection();
+        }
+
+        // --- Drag & Resize Logic ---
+        function makeDraggableAndSelectable(elmnt, type) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            let startWidth = 0;
+            let isResizing = false;
+            
+            elmnt.onmousedown = dragMouseDown;
+            function dragMouseDown(e) {
+                if(isSpacePressed || elmnt.dataset.locked === 'true') return;
+                e.preventDefault();
+                selectElement(elmnt, type);
+                
+                if (e.target.classList.contains('resize-handle')) {
+                    isResizing = true;
+                    // Compute true pixel width currently applied
+                    const currentW = window.getComputedStyle(elmnt).width;
+                    startWidth = parseFloat(currentW);
+                    pos3 = e.clientX;
+                } else {
+                    isResizing = false;
+                    pos3 = e.clientX; 
+                    pos4 = e.clientY;
+                }
+                
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                // Preserve layer ordering while dragging.
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                if (isResizing) {
+                    const dx = (e.clientX - pos3) / currentScale;
+                    let newWidth = startWidth + dx;
+                    if (newWidth < 200) newWidth = 200; // minimum width
+                    elmnt.style.width = newWidth + "px";
+                    
+                    if (type === 'text') {
+                        document.getElementById('prop-text-width-type').value = 'fixed';
+                        document.getElementById('prop-text-width').value = Math.round(newWidth);
+                    }
+                } else {
+                    pos1 = (pos3 - e.clientX) / currentScale;
+                    pos2 = (pos4 - e.clientY) / currentScale;
+                    pos3 = e.clientX; 
+                    pos4 = e.clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                    if (typeof snapElement === "function") snapElement(elmnt, e.altKey);
+                }
+            }
+            
+            function closeDragElement() { 
+                if (typeof hideSnapGuides === "function") hideSnapGuides();
+                document.onmouseup = null; 
+                document.onmousemove = null; 
+                isResizing = false;
+                if (typeof commit === 'function') commit();
+            }
+        }
+
+        renderTemplates();
+        loadTemplate(templates[0].items[0]);
+    </script>
+    <script src="studio.js"></script>
+    <script src="assets.js"></script>
+    <script src="node_modules/jszip/dist/jszip.min.js"></script>
+    <script src="workflow.js"></script>
+</body>
+</html>
