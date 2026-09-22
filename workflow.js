@@ -77,7 +77,7 @@ async function saveOutput(blob,name,kind) {
     download(blob,name);return {success:true};
 }
 saveProject = async function() {
-    if(busy)return;commit();try{const result=await saveOutput(new Blob([JSON.stringify(captureWorkspace())],{type:'application/json'}),'FormCross-project.fcs','project');toast(result.success?'全ページと使用画像を保存しました':'保存をキャンセルしました');}catch(error){toast('保存に失敗しました：'+error.message);}
+    if(busy)return;commit();try{const result=await saveOutput(new Blob([JSON.stringify(captureWorkspace())],{type:'application/json'}),'AppVisual-project.fcs','project');toast(result.success?'全ページと使用画像を保存しました':'保存をキャンセルしました');}catch(error){toast('保存に失敗しました：'+error.message);}
 };
 loadProject = async function(event) {
     const file=event.target.files[0];event.target.value='';if(!file||busy)return;
@@ -113,7 +113,7 @@ async function exportPages(all=false) {
         const scale=Number($('export-scale').value);const files=[];
         for(let i=0;i<selected.length;i++){if(exportCancelled)throw Error('キャンセルしました');$('export-progress').textContent=`${i+1} / ${selected.length} ページを描画中`;const safeName=selected[i].name.replace(/[\\/:*?"<>|]/g,'_').slice(0,60);files.push(...await renderPageFiles(selected[i].state,`${String(i+1).padStart(2,'0')}_${safeName}`,scale));}
         if(exportCancelled)throw Error('キャンセルしました');
-        let blob,name,kind;if(files.length===1){blob=files[0].blob;name=files[0].name;kind='image';}else{const zip=new JSZip();for(const file of files)zip.file(file.name,await file.blob.arrayBuffer());$('export-progress').textContent='ZIPを作成中…';blob=await zip.generateAsync({type:'blob',compression:'STORE'});name='FormCross-pages.zip';kind='zip';}
+        let blob,name,kind;if(files.length===1){blob=files[0].blob;name=files[0].name;kind='image';}else{const zip=new JSZip();for(const file of files)zip.file(file.name,await file.blob.arrayBuffer());$('export-progress').textContent='ZIPを作成中…';blob=await zip.generateAsync({type:'blob',compression:'STORE'});name='AppVisual-pages.zip';kind='zip';}
         if(exportCancelled)throw Error('キャンセルしました');const result=await saveOutput(blob,name,kind);toast(result.success?`${files.length}枚を書き出しました`:'保存をキャンセルしました');
     }catch(error){toast('書き出し：'+error.message);}finally{busy=false;$('export-dialog').close();}
 }
