@@ -1,0 +1,55 @@
+{
+  "name": "formcrossstudio",
+  "version": "1.0.2",
+  "description": "アプリ紹介用スクリーンショットを制作するWebスタジオ",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:web": "node scripts/build-web.cjs",
+    "build": "electron-builder -m",
+    "build:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder -m",
+    "test": "electron tests/smoke.cjs && electron tests/native.cjs"
+  },
+  "build": {
+    "appId": "com.formcross.studio",
+    "productName": "FormCross Studio Pro",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "category": "public.app-category.graphics-design"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "studio.js",
+      "studio.css",
+      "assets.js",
+      "package.json",
+      "node_modules/**/*",
+      "workflow.js",
+      "preload.js"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@phosphor-icons/web": "^2.1.2",
+    "dompurify": "^3.4.15",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jszip": "^3.10.2"
+  }
+}
