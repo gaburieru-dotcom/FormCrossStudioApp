@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 20573)
+Total output lines: 1181
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -42,6 +45,8 @@
         }
         .nav-brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
         .nav-brand span { font-size: 10px; background: var(--accent); padding: 3px 6px; border-radius: 4px; letter-spacing: 1px;}
+        .site-link { color: #bfc9dd; font-size: 12px; text-decoration: none; padding: 7px 9px; border: 1px solid #41485b; border-radius: 6px; }
+        .site-link:hover { color: white; border-color: var(--accent); }
         
         .nav-tools { display: flex; gap: 10px; align-items: center; }
         .lang-select { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer;}
@@ -213,6 +218,7 @@
     <div class="navbar">
         <div class="nav-brand"><i class="ph-fill ph-intersect"></i> AppVisual <span>STUDIO</span></div>
         <div class="nav-tools">
+            <a class="site-link" href="https://sbmgtech.com/" title="kpworksのサービス一覧へ">kpworksへ</a>
             <span style="font-size: 11px; color: #888;">テキスト言語</span>
             <select class="lang-select" id="ui-lang" onchange="changeLanguage()">
                 <option value="ja">🇯🇵 JP</option>
@@ -557,54 +563,7 @@
             if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
                 isSpacePressed = true;
-                canvasArea.style.cursor = 'grab';
-            }
-        });
-        window.addEventListener('keyup', e => {
-            if (e.code === 'Space') {
-                isSpacePressed = false; isPanning = false;
-                canvasArea.style.cursor = 'default';
-            }
-        });
-        canvasArea.addEventListener('mousedown', e => {
-            if (isSpacePressed) {
-                isPanning = true; canvasArea.style.cursor = 'grabbing';
-                panStartX = e.clientX; panStartY = e.clientY;
-                scrollStartX = canvasArea.scrollLeft; scrollStartY = canvasArea.scrollTop;
-            }
-        });
-        window.addEventListener('mousemove', e => {
-            if (isPanning) {
-                canvasArea.scrollLeft = scrollStartX - (e.clientX - panStartX);
-                canvasArea.scrollTop = scrollStartY - (e.clientY - panStartY);
-            }
-        });
-        window.addEventListener('mouseup', () => {
-            if (isPanning) {
-                isPanning = false;
-                if(isSpacePressed) canvasArea.style.cursor = 'grab';
-            }
-        });
-
-        // --- Tabs Logic ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-tab-' + tabId).classList.add('active');
-            
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-        }
-
-        // --- Free Backgrounds (Unsplash) ---
-        const freeBackgrounds = [
-            'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1242&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1557683311-eac922347aa1?q=80&w=1242&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?q=80&w=1242&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1242&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1242&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1242&auto=format&fit=crop'
-        ];
-        const bgList = document.getElementById('free-bg-list');
+                canvasArea.style.cursor = 'gra…573 tokens truncated…ocument.getElementById('free-bg-list');
         freeBackgrounds.forEach(url => {
             const btn = document.createElement('div');
             btn.className = 'bg-thumb';
