@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 20573)
-Total output lines: 1181
+Warning: truncated output (original token count: 20723)
+Total output lines: 1187
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -8,6 +8,12 @@ Total output lines: 1181
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AppVisual</title>
+    <meta name="description" content="AppVisualは、アプリのスクリーンショットや紹介画像をブラウザ上でデザインできる制作ツールです。">
+    <link rel="canonical" href="https://sbmgtech.com/FormCrossStudioApp/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AppVisual">
+    <meta property="og:description" content="アプリのスクリーンショットや紹介画像をブラウザ上でデザインできる制作ツールです。">
+    <meta property="og:url" content="https://sbmgtech.com/FormCrossStudioApp/">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -549,21 +555,7 @@ Total output lines: 1181
         }
         
         const canvasArea = document.getElementById('canvas-area');
-        canvasArea.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                setZoom(e.deltaY > 0 ? -0.05 : 0.05);
-            }
-        }, {passive: false});
-
-        let isPanning = false, isSpacePressed = false;
-        let panStartX = 0, panStartY = 0, scrollStartX = 0, scrollStartY = 0;
-
-        window.addEventListener('keydown', e => {
-            if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                e.preventDefault();
-                isSpacePressed = true;
-                canvasArea.style.cursor = 'gra…573 tokens truncated…ocument.getElementById('free-bg-list');
+        canvasArea.addEventListener('wheel'…723 tokens truncated…ocument.getElementById('free-bg-list');
         freeBackgrounds.forEach(url => {
             const btn = document.createElement('div');
             btn.className = 'bg-thumb';
