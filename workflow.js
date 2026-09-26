@@ -91,8 +91,8 @@ $('page-name').onchange=e=>{if(pages[activePage]){pages[activePage].name=e.targe
 let exportCancelled=false;
 async function renderPageFiles(state,prefix,scale=1) {
     const host=document.createElement('div');host.className='export-host';
-    const dims=state.size.startsWith('ipad')?[2048,2732]:[1242,2688];const pano=state.size.endsWith('pano');const width=dims[0]*(pano?2:1);
-    const clone=document.createElement('div');clone.style.cssText=`position:relative;width:${width}px;height:${dims[1]}px;overflow:hidden;`;clone.style.background=state.bgStyle;
+    const {width,height,panorama:pano}=canvasDimensions(state.size);
+    const clone=document.createElement('div');clone.style.cssText=`position:relative;width:${width}px;height:${height}px;overflow:hidden;`;clone.style.background=state.bgStyle;
     const content=document.createElement('div');content.innerHTML=baseValidate(state).elementsHtml;content.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));clone.append(content);
     if(state.bgOverlay){const shade=document.createElement('div');shade.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:1;';clone.prepend(shade);}
     host.append(clone);document.body.append(host);
