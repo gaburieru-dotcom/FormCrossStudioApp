@@ -11,7 +11,7 @@ function snapshot() {
     return { version: 2, size: $('canvas-size').value, lang: currentLang, bgC1: $('bg-c1').value, bgC2: $('bg-c2').value, bgOverlay: $('bg-overlay').checked, bgStyle: canvas.style.background, elementsHtml: copy.innerHTML };
 }
 function validateProject(data) {
-    if (!data || !['iphone','iphone-pano','ipad','ipad-pano'].includes(data.size) || typeof data.elementsHtml !== 'string' || data.elementsHtml.length > 40000000) throw Error('対応する .fcs プロジェクトを選択してください。');
+    if (!data || ![...$('canvas-size').options].some(option => option.value === data.size) || typeof data.elementsHtml !== 'string' || data.elementsHtml.length > 40000000) throw Error('対応する .fcs プロジェクトを選択してください。');
     const clean = DOMPurify.sanitize(data.elementsHtml, { ALLOWED_TAGS: ['div','h1','span','i','br','img'], ALLOWED_ATTR: ['class','style','src','data-type','data-ja','data-en','data-color','data-font','data-effect','data-shadow','data-name','data-locked','data-hidden','data-source','data-crop-ratio','data-crop-x','data-crop-y','data-crop-zoom'] });
     const box = document.createElement('div'); box.innerHTML = clean;
     if (box.children.length > 200) throw Error('要素数は200個までです。');
