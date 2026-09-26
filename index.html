@@ -250,6 +250,10 @@
                             <option value="iphone-pano">📱 iPhone パノラマ (2画面)</option>
                             <option value="ipad">📱 iPad Pro (2048 x 2732)</option>
                             <option value="ipad-pano">📱 iPad パノラマ (2画面)</option>
+<option value="iphone-landscape">iPhone 横向き (2688 × 1242)</option>
+<option value="iphone-landscape-pano">iPhone 横向き パノラマ (2画面)</option>
+<option value="ipad-landscape">iPad 横向き (2732 × 2048)</option>
+<option value="ipad-landscape-pano">iPad 横向き パノラマ (2画面)</option>
                         </select>
                     </div>
                     
@@ -722,18 +726,27 @@
             if(selectedElement) selectElement(selectedElement, selectedElement.dataset.type);
         }
 
+        function canvasDimensions(size) {
+            const presets = {
+                'iphone': [1242, 2688], 'iphone-pano': [1242, 2688],
+                'ipad': [2048, 2732], 'ipad-pano': [2048, 2732],
+                'iphone-landscape': [2688, 1242], 'iphone-landscape-pano': [2688, 1242],
+                'ipad-landscape': [2732, 2048], 'ipad-landscape-pano': [2732, 2048]
+            };
+            if (!Object.hasOwn(presets, size)) throw new Error('未対応のキャンバスサイズです');
+            const [pageWidth, height] = presets[size];
+            const panorama = size.endsWith('-pano');
+            return { pageWidth, height, width: pageWidth * (panorama ? 2 : 1), panorama };
+        }
         function updateCanvasSize(sizeVal) {
             const val = sizeVal || document.getElementById('canvas-size').value;
-            if(sizeVal) document.getElementById('canvas-size').value = val;
-            
-            const root = document.documentElement;
-            const guide = document.getElementById('split-guide');
-            isPanorama = false; guide.style.display = 'none';
-
-            if(val === 'iphone') { root.style.setProperty('--canvas-w', '1242px'); root.style.setProperty('--canvas-h', '2688px'); }
-            if(val === 'iphone-pano') { root.style.setProperty('--canvas-w', '2484px'); root.style.setProperty('--canvas-h', '2688px'); isPanorama = true; guide.style.display = 'block'; }
-            if(val === 'ipad') { root.style.setProperty('--canvas-w', '2048px'); root.style.setProperty('--canvas-h', '2732px'); }
-            if(val === 'ipad-pano') { root.style.setProperty('--canvas-w', '4096px'); root.style.setProperty('--canvas-h', '2732px'); isPanorama = true; guide.style.display = 'block'; }
+            const dimensions = canvasDimensions(val);
+            document.getElementById('canvas-size').value = val;
+            document.documentElement.style.setProperty('--canvas-w', dimensions.width + 'px');
+            document.documentElement.style.setProperty('--canvas-h', dimensions.height + 'px');
+            isPanorama = dimensions.panorama;
+            document.getElementById('split-guide').style.display = isPanorama ? 'block' : 'none';
+            if (!sizeVal) resetZoom();
         }
 
         function customColor() {
