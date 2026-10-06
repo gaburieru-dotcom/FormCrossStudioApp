@@ -2,6 +2,8 @@
 const MAX_PAGES = 20;
 let pages = [], activePage = 0, workspaceReady = false, persistChain = Promise.resolve(), persistenceError = null;
 let brand = {name:'マイブランド',primary:'#688bff',secondary:'#172033',text:'#ffffff',font:"'Noto Sans JP', sans-serif",logo:''};
+let workspaceUpdatedAt = 0;
+const workspaceChannel = 'BroadcastChannel' in window ? new BroadcastChannel('appvisual-workspace-v3') : null;
 const baseRestore = restore;
 const baseValidate = validateProject;
 const pageId = () => crypto.randomUUID();
@@ -34,9 +36,15 @@ async function workspaceStore(action,value) {
 }
 function persistWorkspace(doc) {
     const stable=JSON.parse(JSON.stringify(doc));
-    persistChain=persistChain.catch(()=>{}).then(()=>workspaceStore('put',{id:'autosave',document:stable})).then(()=>{persistenceError=null;toast('全ページをこの端末に自動保存しました');},error=>{persistenceError=error;toast('自動保存に失敗しました。「保存」でファイルを保存してください');});
+    stable.updatedAt=Date.now();workspaceUpdatedAt=stable.updatedAt;
+    persistChain=persistChain.catch(()=>{}).then(()=>workspaceStore('put',{id:'autosave',document:stable})).then(()=>{persistenceError=null;workspaceChannel?.postMessage({document:stable});toast('全ページをこの端末に自動保存しました');},error=>{persistenceError=error;toast('自動保存に失敗しました。「保存」でファイルを保存してください');});
     return persistChain;
 }
+workspaceChannel?.addEventListener('message',event=>{
+    const doc=event.data?.document;
+    if(!workspaceReady||busy||!doc||!Number.isFinite(doc.updatedAt)||doc.updatedAt<=workspaceUpdatedAt)return;
+    workspaceUpdatedAt=doc.updatedAt;restoreWorkspace(doc);history=[JSON.stringify(captureWorkspace())];historyIndex=0;syncHistoryButtons();toast('別のタブで保存した変更を反映しました');
+});
 async function flushWorkspace() { commit();await persistChain;if(persistenceError)throw persistenceError; }
 function syncHistoryButtons() { $('undo-button').disabled=historyIndex<1;$('redo-button').disabled=historyIndex>=history.length-1; }
 commit = function() {
@@ -230,7 +238,7 @@ document.body.classList.add('workspace-loading');
 const workspaceInitialized=(async()=>{
     try{
         const saved=await workspaceStore('get','autosave');
-        if(saved?.document)restoreWorkspace(saved.document);
+        if(saved?.document){workspaceUpdatedAt=Number(saved.document.updatedAt)||0;restoreWorkspace(saved.document);}
         else{let old=null;try{old=JSON.parse(localStorage.getItem(STORAGE_KEY));}catch{}if(old)restoreWorkspace(old);else{pages=[{id:pageId(),name:'ページ 1',state:snapshot()}];syncBrandUI();}}
     }catch(error){pages=[{id:pageId(),name:'ページ 1',state:snapshot()}];toast('自動復元できませんでした。保存ファイルを開いてください');}
     finally{workspaceReady=true;renderTemplates();renderPages();renderLayers();commit();resetZoom();document.body.classList.remove('workspace-loading');}
