@@ -204,7 +204,7 @@ function resetCrop(el){if(!el?.dataset.source||el.dataset.locked==='true')return
 $('reset-crop').onclick=()=>resetCrop(selectedElement);
 // Brand settings live with the document, and a reusable preset lives on the device.
 const fonts=[...$('prop-text-font').options].map(option=>({value:option.value,label:option.textContent}));
-document.body.insertAdjacentHTML('beforeend',`<dialog id="brand-dialog"><h2>ブランド設定</h2><p class="asset-help">配色・フォント・ロゴを設定します。ページの見た目を変えるには「保存して全ページに適用」を押してください。</p><label>ブランド名<input id="brand-name" class="inspector-input" maxlength="60"></label><div class="brand-colors"><label>背景 上<input id="brand-primary" type="color"></label><label>背景 下<input id="brand-secondary" type="color"></label><label>文字色<input id="brand-text" type="color"></label></div><label>フォント<select id="brand-font" class="inspector-input"></select></label><div class="studio-actions"><button class="studio-button" onclick="document.getElementById('brand-logo-file').click()">ロゴを読み込む</button><button id="place-brand-logo" class="studio-button">ロゴを配置</button><button id="remove-brand-logo" class="studio-button">ロゴを解除</button></div><input hidden id="brand-logo-file" type="file" accept="image/png,image/jpeg,image/webp"><img id="brand-logo-preview" alt="登録ロゴ"><div class="studio-actions"><button id="save-brand" class="studio-button">設定のみ保存</button><button id="load-brand" class="studio-button">保存済み設定を読込</button></div><div class="studio-actions"><button id="apply-brand" class="studio-button">このページに適用</button><button id="apply-brand-all" class="studio-button">保存して全ページに適用</button><button class="studio-button" onclick="this.closest('dialog').close()">閉じる</button></div><p id="brand-status" role="status" class="asset-help"></p></dialog>`);
+document.body.insertAdjacentHTML('beforeend',`<dialog id="brand-dialog"><h2>ブランド設定</h2><p class="asset-help">配色・フォント・ロゴを設定します。「保存して全ページに適用」で、すべてのページへ反映して保存します。</p><label>ブランド名<input id="brand-name" class="inspector-input" maxlength="60"></label><div class="brand-colors"><label>背景 上<input id="brand-primary" type="color"></label><label>背景 下<input id="brand-secondary" type="color"></label><label>文字色<input id="brand-text" type="color"></label></div><label>フォント<select id="brand-font" class="inspector-input"></select></label><div class="studio-actions"><button class="studio-button" onclick="document.getElementById('brand-logo-file').click()">ロゴを読み込む</button><button id="place-brand-logo" class="studio-button">ロゴを配置</button><button id="remove-brand-logo" class="studio-button">ロゴを解除</button></div><input hidden id="brand-logo-file" type="file" accept="image/png,image/jpeg,image/webp"><img id="brand-logo-preview" alt="登録ロゴ"><div class="studio-actions"><button id="save-brand" class="studio-button">保存して全ページに適用</button><button id="load-brand" class="studio-button">保存済み設定を読込</button></div><div class="studio-actions"><button id="apply-brand" class="studio-button">このページだけに適用</button><button class="studio-button" onclick="this.closest('dialog').close()">閉じる</button></div><p id="brand-status" role="status" class="asset-help"></p></dialog>`);
 for(const font of fonts){const option=document.createElement('option');option.value=font.value;option.textContent=font.label;$('brand-font').append(option);}
 let draftLogo='';
 function syncBrandUI(){if(!$('brand-name'))return;$('brand-name').value=brand.name;for(const key of ['primary','secondary','text','font'])$('brand-'+key).value=brand[key];draftLogo=brand.logo;renderBrandLogo();}
@@ -213,7 +213,7 @@ function readBrandUI(){return {name:$('brand-name').value.trim()||'マイブラ�
 $('brand-logo-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{draftLogo=await readImage(file);renderBrandLogo();$('brand-status').textContent='ロゴを読み込みました。設定を保存してください。';}catch(error){$('brand-status').textContent=error.message;}};
 $('remove-brand-logo').onclick=()=>{draftLogo='';renderBrandLogo();};
 $('place-brand-logo').onclick=async()=>{try{await addImageAsset({name:'ブランドロゴ',url:draftLogo});$('brand-dialog').close();}catch(error){$('brand-status').textContent=error.message;}};
-$('save-brand').onclick=async()=>{try{brand=readBrandUI();await flushWorkspace();await workspaceStore('put',{id:'brand-preset',brand:{...brand}});$('brand-status').textContent='設定を保存しました。ページの背景・文字は「保存して全ページに適用」で反映できます。';}catch(error){$('brand-status').textContent='保存に失敗しました：'+error.message;}};
+$('save-brand').onclick=()=>applyBrand(true,true);
 $('load-brand').onclick=async()=>{try{const saved=await workspaceStore('get','brand-preset');if(!saved)return void($('brand-status').textContent='保存済み設定はありません');brand=saved.brand;syncBrandUI();commit();$('brand-status').textContent='保存済み設定を読み込みました';}catch(error){$('brand-status').textContent=error.message;}};
 function applyBrandToState(state,kit) {
     const updated={...state,bgC1:kit.primary,bgC2:kit.secondary,bgOverlay:false,bgStyle:`linear-gradient(135deg, ${kit.primary}, ${kit.secondary})`,bgPosition:''};
@@ -221,12 +221,12 @@ function applyBrandToState(state,kit) {
     box.querySelectorAll('.element[data-type="text"]').forEach(el=>{if(el.dataset.locked==='true')return;const h=el.querySelector('h1');el.dataset.font=kit.font;el.dataset.color=kit.text;applyTextStyles(el,{size:parseFloat(h.style.fontSize)||100,font:kit.font,color:kit.text,effect:el.dataset.effect||'normal',shadow:el.dataset.shadow||'none',lineHeight:h.style.lineHeight||1.2,spacing:parseFloat(h.style.letterSpacing)||0});});
     updated.elementsHtml=box.innerHTML;return updated;
 }
-async function applyBrand(all=false){
+async function applyBrand(all=false,savePreset=false){
     try{
-        commit();brand=readBrandUI();pages.forEach((page,i)=>{if(all||i===activePage)page.state=applyBrandToState(page.state,brand);});baseRestore(pages[activePage].state);await flushWorkspace();$('brand-dialog').close();toast('ブランドの配色とフォントを保存して適用しました。');
+        commit();brand=readBrandUI();pages.forEach((page,i)=>{if(all||i===activePage)page.state=applyBrandToState(page.state,brand);});baseRestore(pages[activePage].state);await flushWorkspace();if(savePreset)await workspaceStore('put',{id:'brand-preset',brand:{...brand}});$('brand-dialog').close();toast(all?'ブランド設定を全ページに保存して適用しました。':'ブランドの配色とフォントを保存して適用しました。');
     }catch(error){$('brand-status').textContent='保存に失敗しました：'+error.message;}
 }
-$('apply-brand').onclick=()=>applyBrand(false);$('apply-brand-all').onclick=()=>applyBrand(true);
+$('apply-brand').onclick=()=>applyBrand(false);
 // Favorites are non-destructive and independent from project history.
 let favoriteOnly=false;
 const favoriteToggle=document.createElement('button');favoriteToggle.className='studio-button';favoriteToggle.textContent='☆ お気に入りだけ表示';$('asset-search').before(favoriteToggle);
