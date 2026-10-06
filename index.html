@@ -25,7 +25,7 @@
 
     <style>
         :root {
-            --canvas-w: 1242px; --canvas-h: 2688px;
+            --canvas-w: 1179px; --canvas-h: 2556px;
             --scale: 0.16; 
             --font-family: 'Noto Sans JP', sans-serif;
             --bg-color: #151515;
@@ -256,6 +256,11 @@
 <option value="ipad-landscape-pano">iPad 横向き パノラマ (2画面)</option>
                         </select>
                     </div>
+                    <div class="studio-actions" aria-label="全ページへの適用">
+                        <button class="studio-button" type="button" onclick="applyPageSettingsToAll('size')">サイズを全ページに適用</button>
+                        <button class="studio-button" type="button" onclick="applyPageSettingsToAll('background')">背景を全ページに適用</button>
+                    </div>
+                    <p class="asset-help">現在のページの設定を、ほかのページの要素配置を変えずに揃えます。</p>
                     
                     <div class="adv-section-title" style="margin-top: 5px;">無地・グラデーション</div>
                     <div class="inspector-grid">
@@ -728,10 +733,10 @@
 
         function canvasDimensions(size) {
             const presets = {
-                'iphone': [1242, 2688], 'iphone-pano': [1242, 2688],
-                'ipad': [2048, 2732], 'ipad-pano': [2048, 2732],
-                'iphone-landscape': [2688, 1242], 'iphone-landscape-pano': [2688, 1242],
-                'ipad-landscape': [2732, 2048], 'ipad-landscape-pano': [2732, 2048]
+                'iphone': [1179, 2556], 'iphone-pano': [1179, 2556],
+                'ipad': [1206, 2622], 'ipad-pano': [1206, 2622],
+                'iphone-landscape': [2556, 1179], 'iphone-landscape-pano': [2556, 1179],
+                'ipad-landscape': [2622, 1206], 'ipad-landscape-pano': [2622, 1206]
             };
             if (!Object.hasOwn(presets, size)) throw new Error('未対応のキャンバスサイズです');
             const [pageWidth, height] = presets[size];

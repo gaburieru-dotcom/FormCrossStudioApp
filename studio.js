@@ -8,7 +8,7 @@ function toast(message) { $('studio-status').textContent = message; }
 function snapshot() {
     const copy = elementsContainer.cloneNode(true);
     copy.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-    return { version: 2, size: $('canvas-size').value, lang: currentLang, bgC1: $('bg-c1').value, bgC2: $('bg-c2').value, bgOverlay: $('bg-overlay').checked, bgStyle: canvas.style.background, elementsHtml: copy.innerHTML };
+    return { version: 2, size: $('canvas-size').value, lang: currentLang, bgC1: $('bg-c1').value, bgC2: $('bg-c2').value, bgOverlay: $('bg-overlay').checked, bgStyle: canvas.style.background, bgPosition: canvas.style.backgroundPosition, elementsHtml: copy.innerHTML };
 }
 function validateProject(data) {
     if (!data || ![...$('canvas-size').options].some(option => option.value === data.size) || typeof data.elementsHtml !== 'string' || data.elementsHtml.length > 40000000) throw Error('対応する .fcs プロジェクトを選択してください。');
@@ -28,6 +28,7 @@ function restore(data) {
         currentLang = data.lang === 'en' ? 'en' : 'ja'; $('ui-lang').value = currentLang;
         $('bg-c1').value = data.bgC1 || '#1e3c72'; $('bg-c2').value = data.bgC2 || '#2a5298';
         canvas.style.background = data.bgStyle || `linear-gradient(135deg, ${$('bg-c1').value}, ${$('bg-c2').value})`;
+        canvas.style.backgroundPosition = data.bgPosition || '';
         $('bg-overlay').checked = !!data.bgOverlay; toggleOverlay();
         elementsContainer.innerHTML = data.elementsHtml;
         

@@ -71,6 +71,21 @@ function addPage(duplicate=false) {
 }
 function removePage() { if(busy||pages.length<2)return;commit();pages.splice(activePage,1);activePage=Math.min(activePage,pages.length-1);baseRestore(pages[activePage].state);commit();toast('ページを削除しました。元に戻すで復元できます'); }
 function movePage(delta) { const next=activePage+delta;if(busy||next<0||next>=pages.length)return;commit();[pages[next],pages[activePage]]=[pages[activePage],pages[next]];activePage=next;commit(); }
+function applyPageSettingsToAll(kind) {
+    if (busy || !pages.length) return;
+    commit();
+    const source = snapshot();
+    pages.forEach(page => {
+        const next = {...page.state};
+        if (kind === 'size') next.size = source.size;
+        if (kind === 'background') Object.assign(next, {bgC1: source.bgC1, bgC2: source.bgC2, bgOverlay: source.bgOverlay, bgStyle: source.bgStyle, bgPosition: source.bgPosition});
+        page.state = next;
+    });
+    baseRestore(pages[activePage].state);
+    commit();
+    resetZoom();
+    toast(kind === 'size' ? 'キャンバスサイズを全ページに適用しました' : '背景を全ページに適用しました');
+}
 async function saveOutput(blob,name,kind) {
     if(kind==='project' && blob.size>200000000)throw Error('プロジェクトが200MBを超えています。画像やページを減らして保存してください。');
     if(window.desktopAPI)return window.desktopAPI.saveFile({name,kind,data:await blob.arrayBuffer()});
@@ -92,7 +107,7 @@ let exportCancelled=false;
 async function renderPageFiles(state,prefix,scale=1) {
     const host=document.createElement('div');host.className='export-host';
     const {width,height,panorama:pano}=canvasDimensions(state.size);
-    const clone=document.createElement('div');clone.style.cssText=`position:relative;width:${width}px;height:${height}px;overflow:hidden;`;clone.style.background=state.bgStyle;
+    const clone=document.createElement('div');clone.style.cssText=`position:relative;width:${width}px;height:${height}px;overflow:hidden;`;clone.style.background=state.bgStyle;clone.style.backgroundPosition=state.bgPosition||'';
     const content=document.createElement('div');content.innerHTML=baseValidate(state).elementsHtml;content.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));clone.append(content);
     if(state.bgOverlay){const shade=document.createElement('div');shade.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:1;';clone.prepend(shade);}
     host.append(clone);document.body.append(host);
@@ -237,4 +252,4 @@ async function rasterizeDeviceScreens(root){
     }
 }
 bgImporter.insertAdjacentHTML('beforeend','<label class="asset-help">背景の横位置<input id="background-x" type="range" min="0" max="100" value="50"></label><label class="asset-help">背景の縦位置<input id="background-y" type="range" min="0" max="100" value="50"></label>');
-for(const id of ['background-x','background-y'])$(id).oninput=()=>{if(canvas.style.backgroundImage.includes('url('))canvas.style.backgroundPosition=`${$('background-x').value}% ${$('background-y').value}%`;};
+for(const id of ['background-x','background-y'])$(id).oninput=()=>{if(canvas.style.backgroundImage.includes('url(')){canvas.style.backgroundPosition=`${$('background-x').value}% ${$('background-y').value}%`;commit();}};
