@@ -21,6 +21,35 @@ function switchAllPagesLanguage(language) {
     baseRestore(pages[activePage].state);commit();resetZoom();
     toast(language==='en' ? `全${pages.length}ページを英語表示にしました${unchanged?`（未翻訳の${unchanged}件は元のままです）`:''}` : `全${pages.length}ページを日本語に戻しました`);
 }
+async function translateTextToEnglish(text) {
+    const url=new URL('https://api.mymemory.translated.net/get');
+    url.searchParams.set('q',text);url.searchParams.set('langpair','ja|en');
+    const response=await fetch(url);const data=await response.json();
+    if(!response.ok||!data.responseData?.translatedText)throw Error('翻訳サービスから結果を取得できませんでした');
+    return data.responseData.translatedText;
+}
+async function translateAllPagesToEnglish() {
+    if(busy||!pages.length)return;commit();busy=true;
+    const button=document.getElementById('translate-all-pages');const originalLabel=button?.textContent;if(button){button.disabled=true;button.textContent='英訳中…';}
+    try{
+        const translations=new Map();let count=0;
+        const nextPages=[];
+        for(const page of pages){
+            const box=document.createElement('div');box.innerHTML=page.state.elementsHtml;
+            for(const element of box.querySelectorAll('.element[data-type="text"], .element[data-type="badge"]')){
+                const content=element.querySelector(element.dataset.type==='badge'?'span':'h1');if(!content)continue;
+                const source=(element.dataset.ja||content.innerHTML).replace(/<br\s*\/?\s*>/gi,'\n');const plain=document.createElement('div');plain.innerHTML=source;const text=plain.textContent.trim();
+                if(!text)continue;
+                if(!translations.has(text))translations.set(text,await translateTextToEnglish(text));
+                const translated=textToSafeHtml(translations.get(text));element.dataset.ja=source;element.dataset.en=translated;content.innerHTML=translated;count++;
+            }
+            nextPages.push({...page,state:{...page.state,lang:'en',elementsHtml:box.innerHTML}});
+        }
+        pages=nextPages;baseRestore(pages[activePage].state);renderTemplates();
+        busy=false;commit();toast(`全${pages.length}ページの${count}件を英語に翻訳しました`);
+    }catch(error){toast('英語翻訳に失敗しました：'+error.message);}
+    finally{busy=false;if(button){button.disabled=false;button.textContent=originalLabel||'EN 全ページを翻訳';}}
+}
 function captureWorkspace() {
     if (pages[activePage]) pages[activePage].state = snapshot();
     // Keep every queued save independent from later edits to the page state.
@@ -162,7 +191,7 @@ async function exportPages(all=false) {
     }catch(error){toast('書き出し：'+error.message);}finally{busy=false;$('export-dialog').close();}
 }
 exportImage = () => exportPages(false);
-const toolbar=document.createElement('div');toolbar.className='workflow-toolbar';toolbar.innerHTML=`<label><input type="checkbox" id="snap-enabled" checked>整列ガイド・吸着 <small>Altで一時解除</small></label><label>書き出し倍率 <select id="export-scale" aria-label="書き出し倍率"><option value="1">原寸 1×</option><option value="0.5">確認用 0.5×</option></select></label><button class="studio-button" onclick="exportPages(true)">全ページを一括書き出し</button><button class="studio-button" onclick="switchAllPagesLanguage('en')">EN 全ページ英語化</button><button class="studio-button" onclick="switchAllPagesLanguage('ja')">JP 日本語に戻す</button><button class="studio-button" onclick="document.getElementById('brand-dialog').showModal()">ブランド設定</button><button class="studio-button" onclick="document.getElementById('help-dialog').showModal()">使い方</button>`;
+const toolbar=document.createElement('div');toolbar.className='workflow-toolbar';toolbar.innerHTML=`<label><input type="checkbox" id="snap-enabled" checked>整列ガイド・吸着 <small>Altで一時解除</small></label><label>書き出し倍率 <select id="export-scale" aria-label="書き出し倍率"><option value="1">原寸 1×</option><option value="0.5">確認用 0.5×</option></select></label><button class="studio-button" onclick="exportPages(true)">全ページを一括書き出し</button><button id="translate-all-pages" class="studio-button" title="テキストをMyMemory Translation APIへ送信して英訳します" onclick="translateAllPagesToEnglish()">EN 全ページを翻訳</button><button class="studio-button" onclick="switchAllPagesLanguage('ja')">JP 日本語に戻す</button><button class="studio-button" onclick="document.getElementById('brand-dialog').showModal()">ブランド設定</button><button class="studio-button" onclick="document.getElementById('help-dialog').showModal()">使い方</button>`;
 document.querySelector('.navbar').after(toolbar);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="export-dialog"><h2>画像を書き出しています</h2><p id="export-progress" role="status"></p><button class="studio-button" onclick="exportCancelled=true">キャンセル</button></dialog><dialog id="help-dialog"><h2>制作の流れ</h2><ol><li>テンプレートを選び、テキストやスクリーンショットを編集</li><li>「素材」から画像をインポートし、配置や背景に使用</li><li>ページを追加・複製して紹介画像を揃える</li><li>ブランド設定で配色と文字を統一</li><li>「全ページを一括書き出し」でPNGをZIPに保存</li></ol><p>⌘/Ctrl+Z：元に戻す　⌘/Ctrl+D：複製<br>矢印：1px移動　Shift＋矢印：10px移動<br>Space＋ドラッグ：画面を移動　Alt：吸着を解除</p><p>ライブラリの削除は配置済み画像に影響しません。ページやレイヤーの削除は「元に戻す」で復元できます。</p><button class="studio-button" onclick="this.closest('dialog').close()">閉じる</button></dialog>`);
 $('export-dialog').addEventListener('cancel',e=>{e.preventDefault();exportCancelled=true;});
