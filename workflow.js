@@ -22,11 +22,12 @@ function switchAllPagesLanguage(language) {
     toast(language==='en' ? `全${pages.length}ページを英語表示にしました${unchanged?`（未翻訳の${unchanged}件は元のままです）`:''}` : `全${pages.length}ページを日本語に戻しました`);
 }
 async function translateTextToEnglish(text) {
-    const url=new URL('https://api.mymemory.translated.net/get');
-    url.searchParams.set('q',text);url.searchParams.set('langpair','ja|en');
+    const url=new URL('https://translate.googleapis.com/translate_a/single');
+    for(const [key,value] of [['client','gtx'],['sl','ja'],['tl','en'],['dt','t'],['q',text]])url.searchParams.set(key,value);
     const response=await fetch(url);const data=await response.json();
-    if(!response.ok||!data.responseData?.translatedText)throw Error('翻訳サービスから結果を取得できませんでした');
-    return data.responseData.translatedText;
+    const translated=data?.[0]?.map(part=>part[0]).join('');
+    if(!response.ok||!translated)throw Error('翻訳サービスから結果を取得できませんでした');
+    return translated;
 }
 async function translateAllPagesToEnglish() {
     if(busy||!pages.length)return;commit();busy=true;
@@ -191,7 +192,7 @@ async function exportPages(all=false) {
     }catch(error){toast('書き出し：'+error.message);}finally{busy=false;$('export-dialog').close();}
 }
 exportImage = () => exportPages(false);
-const toolbar=document.createElement('div');toolbar.className='workflow-toolbar';toolbar.innerHTML=`<label><input type="checkbox" id="snap-enabled" checked>整列ガイド・吸着 <small>Altで一時解除</small></label><label>書き出し倍率 <select id="export-scale" aria-label="書き出し倍率"><option value="1">原寸 1×</option><option value="0.5">確認用 0.5×</option></select></label><button class="studio-button" onclick="exportPages(true)">全ページを一括書き出し</button><button id="translate-all-pages" class="studio-button" title="テキストをMyMemory Translation APIへ送信して英訳します" onclick="translateAllPagesToEnglish()">EN 全ページを翻訳</button><button class="studio-button" onclick="switchAllPagesLanguage('ja')">JP 日本語に戻す</button><button class="studio-button" onclick="document.getElementById('brand-dialog').showModal()">ブランド設定</button><button class="studio-button" onclick="document.getElementById('help-dialog').showModal()">使い方</button>`;
+const toolbar=document.createElement('div');toolbar.className='workflow-toolbar';toolbar.innerHTML=`<label><input type="checkbox" id="snap-enabled" checked>整列ガイド・吸着 <small>Altで一時解除</small></label><label>書き出し倍率 <select id="export-scale" aria-label="書き出し倍率"><option value="1">原寸 1×</option><option value="0.5">確認用 0.5×</option></select></label><button class="studio-button" onclick="exportPages(true)">全ページを一括書き出し</button><button id="translate-all-pages" class="studio-button" title="テキストをGoogle 翻訳へ送信して英訳します" onclick="translateAllPagesToEnglish()">EN 全ページを翻訳</button><button class="studio-button" onclick="switchAllPagesLanguage('ja')">JP 日本語に戻す</button><button class="studio-button" onclick="document.getElementById('brand-dialog').showModal()">ブランド設定</button><button class="studio-button" onclick="document.getElementById('help-dialog').showModal()">使い方</button>`;
 document.querySelector('.navbar').after(toolbar);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="export-dialog"><h2>画像を書き出しています</h2><p id="export-progress" role="status"></p><button class="studio-button" onclick="exportCancelled=true">キャンセル</button></dialog><dialog id="help-dialog"><h2>制作の流れ</h2><ol><li>テンプレートを選び、テキストやスクリーンショットを編集</li><li>「素材」から画像をインポートし、配置や背景に使用</li><li>ページを追加・複製して紹介画像を揃える</li><li>ブランド設定で配色と文字を統一</li><li>「全ページを一括書き出し」でPNGをZIPに保存</li></ol><p>⌘/Ctrl+Z：元に戻す　⌘/Ctrl+D：複製<br>矢印：1px移動　Shift＋矢印：10px移動<br>Space＋ドラッグ：画面を移動　Alt：吸着を解除</p><p>ライブラリの削除は配置済み画像に影響しません。ページやレイヤーの削除は「元に戻す」で復元できます。</p><button class="studio-button" onclick="this.closest('dialog').close()">閉じる</button></dialog>`);
 $('export-dialog').addEventListener('cancel',e=>{e.preventDefault();exportCancelled=true;});
