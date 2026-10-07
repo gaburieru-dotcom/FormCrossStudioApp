@@ -1,7 +1,7 @@
 'use strict';
 const MAX_PAGES = 20;
 let pages = [], activePage = 0, workspaceReady = false, persistChain = Promise.resolve(), persistenceError = null;
-let brand = {name:'マイブランド',primary:'#688bff',secondary:'#172033',text:'#ffffff',font:"'Noto Sans JP', sans-serif",logo:''};
+let brand = {name:'マイブランド',primary:'#688bff',secondary:'#172033',text:'#ffffff',font:"'Noto Sans JP', sans-serif",logo:'',applyToAll:false};
 let workspaceUpdatedAt = 0;
 const workspaceChannel = 'BroadcastChannel' in window ? new BroadcastChannel('appvisual-workspace-v3') : null;
 const baseRestore = restore;
@@ -22,6 +22,7 @@ function normalizeWorkspace(data) {
         nextBrand.name=String(data.brand.name||'マイブランド').slice(0,60);
         const fonts=[...$('brand-font').options].map(o=>o.value);if(fonts.includes(data.brand.font))nextBrand.font=data.brand.font;
         nextBrand.logo=/^data:image\/(png|jpeg|webp);base64,/.test(data.brand.logo||'')?data.brand.logo:'';
+        nextBrand.applyToAll=data.brand.applyToAll===true;
     }
     return {version:3,activePage:Math.max(0,Math.min(result.length-1,Math.floor(Number(data.activePage)||0))),brand:nextBrand,pages:result};
 }
@@ -131,7 +132,12 @@ async function renderPageFiles(state,prefix,scale=1) {
     }finally{host.remove();}
 }
 async function exportPages(all=false) {
-    if(busy)return;commit();const selected=all?captureWorkspace().pages:[{...pages[activePage],state:snapshot()}];busy=true;exportCancelled=false;
+    if(busy)return;commit();
+    if(all&&brand.applyToAll){
+        pages.forEach(page=>{page.state=applyBrandToState(page.state,brand);});
+        baseRestore(pages[activePage].state);commit();
+    }
+    const selected=all?captureWorkspace().pages:[{...pages[activePage],state:snapshot()}];busy=true;exportCancelled=false;
     $('export-dialog').showModal();$('export-progress').textContent='準備中…';
     try{
         const scale=Number($('export-scale').value);const files=[];
@@ -223,7 +229,7 @@ function applyBrandToState(state,kit) {
 }
 async function applyBrand(all=false,savePreset=false){
     try{
-        commit();brand=readBrandUI();pages.forEach((page,i)=>{if(all||i===activePage)page.state=applyBrandToState(page.state,brand);});baseRestore(pages[activePage].state);await flushWorkspace();if(savePreset)await workspaceStore('put',{id:'brand-preset',brand:{...brand}});$('brand-dialog').close();toast(all?'ブランド設定を全ページに保存して適用しました。':'ブランドの配色とフォントを保存して適用しました。');
+        commit();brand={...readBrandUI(),applyToAll:all||brand.applyToAll};pages.forEach((page,i)=>{if(all||i===activePage)page.state=applyBrandToState(page.state,brand);});baseRestore(pages[activePage].state);await flushWorkspace();if(savePreset)await workspaceStore('put',{id:'brand-preset',brand:{...brand}});$('brand-dialog').close();toast(all?'ブランド設定を全ページに保存して適用しました。':'ブランドの配色とフォントを保存して適用しました。');
     }catch(error){$('brand-status').textContent='保存に失敗しました：'+error.message;}
 }
 $('apply-brand').onclick=()=>applyBrand(false);
