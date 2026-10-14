@@ -6,7 +6,7 @@ const output = path.join(root, 'public');
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(path.join(output, 'vendor'), { recursive: true });
 
-for (const file of ['assets.js', 'index.html', 'studio.css', 'studio.js', 'workflow.js']) {
+for (const file of ['assets.js', 'index.html', 'studio.css', 'studio.js', 'workflow.js', 'design-lab.js']) {
   fs.copyFileSync(path.join(root, file), path.join(output, file));
 }
 

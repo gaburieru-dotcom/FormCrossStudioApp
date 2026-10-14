@@ -177,10 +177,6 @@ async function renderPageFiles(state,prefix,scale=1) {
 }
 async function exportPages(all=false) {
     if(busy)return;commit();
-    if(all&&brand.applyToAll){
-        pages.forEach(page=>{page.state=applyBrandToState(page.state,brand);});
-        baseRestore(pages[activePage].state);commit();
-    }
     const selected=all?captureWorkspace().pages:[{...pages[activePage],state:snapshot()}];busy=true;exportCancelled=false;
     $('export-dialog').showModal();$('export-progress').textContent='準備中…';
     try{
